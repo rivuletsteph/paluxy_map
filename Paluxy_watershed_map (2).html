@@ -1,0 +1,340 @@
+<!doctype html>
+<!--
+  Paluxy River watershed, draft map 1 (TIAER "Data Centers & Your Water")
+  Layers per the Aug 7, 2026 work session. All data are public and load live from the source.
+  Two layers read local files when this page is hosted (e.g., GitHub Pages):
+    data/data_centers.geojson  footprints from Alex Ford, Texas Tribune (credit on use)
+    data/twdb_wells.geojson    export from the TWDB Groundwater Database
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paluxy River watershed, draft map 1</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#222;--muted:#666;--rule:#bbb;font-family:"Source Serif 4",Georgia,"Times New Roman",serif}
+  html,body{margin:0;height:100%;color:var(--ink)}
+  #map{position:absolute;inset:0;background:#f2f2f2}
+  .key{background:#fff;border:1px solid var(--rule);padding:12px 14px;max-width:290px;font-size:13px;line-height:1.35;max-height:calc(100vh - 40px);overflow-y:auto}
+  .key h1{font-size:15px;font-weight:600;margin:0 0 8px}
+  .item{display:grid;grid-template-columns:16px 18px 1fr;gap:6px;align-items:start;padding:4px 0;border-top:1px solid #eee}
+  .item input{margin:2px 0 0}
+  .sym{width:14px;height:14px;margin-top:2px;box-sizing:border-box}
+  .src{display:block;font-size:11px;color:var(--muted)}
+  .src a{color:var(--muted)}
+  .st{display:block;font-size:11px;color:var(--muted);font-style:italic}
+  .st.err{color:#8a2d1a}
+  .leaflet-popup-content{font-family:inherit;font-size:13px;line-height:1.4}
+  .leaflet-popup-content b{font-weight:600}
+  .leaflet-popup-content a{color:#1f4e79}
+  .scn{background:#fff;border:1px solid var(--rule);padding:12px 14px;width:300px;font-size:13px;line-height:1.35}
+  .scn h2{font-size:14px;font-weight:600;margin:0 0 6px}
+  .scn .in{display:grid;grid-template-columns:1fr 70px;gap:4px 8px;align-items:center;margin-bottom:8px}
+  .scn input{font:inherit;width:100%;box-sizing:border-box}
+  .scn .note{font-size:11px;color:var(--muted);margin-top:6px}
+  .scn .note a{color:var(--muted)}
+  .scn table{border-collapse:collapse;width:100%;font-size:12px;margin-top:4px}
+  .scn td,.scn th{padding:2px 4px;text-align:right;border-bottom:1px solid #eee}
+  .scn td:first-child,.scn th:first-child{text-align:left}
+  @media (max-width:600px){.key{max-width:220px;font-size:12px}}
+</style>
+</head>
+<body>
+<div id="map" role="application" aria-label="Map of the Paluxy River watershed"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/6.5.0/turf.min.js"></script>
+<script>
+const WBD = 'https://hydro.nationalmap.gov/arcgis/rest/services/wbd/MapServer';
+const NHD = 'https://hydro.nationalmap.gov/arcgis/rest/services/nhd/MapServer';
+const HUC10 = '1206020201';  // Paluxy River
+let BBOX = {w:-98.45, s:32.02, e:-97.62, n:32.55}, WS = null, WSF = null;
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function getJSON(url, ms = 60000){
+  const c = new AbortController(), t = setTimeout(() => c.abort(), ms);
+  try{ const r = await fetch(url, {signal:c.signal}); if(!r.ok) throw new Error('HTTP ' + r.status); return await r.json(); }
+  catch(e){ throw new Error(e.name === 'AbortError' ? 'timed out' : e.message); } finally{ clearTimeout(t); }
+}
+async function arcQuery(url, p){
+  const u = new URL(url + '/query');
+  Object.entries({f:'geojson', outSR:4326, outFields:'*', where:'1=1', ...p}).forEach(([k,v]) => u.searchParams.set(k, v));
+  const j = await getJSON(u); if(j.error) throw new Error(j.error.message); return j;
+}
+async function arcQueryAll(url, p){
+  const out = [];
+  for(let i = 0; i < 8; i++){
+    const fc = await arcQuery(url, {...p, resultOffset:i*1000, resultRecordCount:1000});
+    out.push(...fc.features);
+    if(!(fc.exceededTransferLimit || fc.properties?.exceededTransferLimit) && fc.features.length < 1000) break;
+  }
+  return out;
+}
+const env = () => ({geometry:`${BBOX.w},${BBOX.s},${BBOX.e},${BBOX.n}`, geometryType:'esriGeometryEnvelope', inSR:4326, spatialRel:'esriSpatialRelIntersects'});
+const inWS = xy => !WSF || turf.booleanPointInPolygon(xy, WSF);
+let nhdMeta = null;
+async function nhdLayer(res){
+  nhdMeta ??= await getJSON(NHD + '?f=json');
+  for(const re of res){ const l = nhdMeta.layers.find(x => re.test(x.name) && !x.subLayerIds); if(l) return `${NHD}/${l.id}`; }
+  throw new Error('NHD layer not found');
+}
+const dot = (color, r = 5, stroke = '#fff') => ({radius:r, color:stroke, weight:1, fillColor:color, fillOpacity:1});
+
+/* map + basemaps */
+const map = L.map('map', {preferCanvas:true, zoomControl:false}).setView([32.29, -98.0], 10);
+L.control.zoom({position:'bottomright'}).addTo(map);
+L.control.scale({position:'bottomleft'}).addTo(map);
+[['mask',390],['lines',420]].forEach(([n,z]) => { map.createPane(n); map.getPane(n).style.zIndex = z; });
+map.getPane('mask').style.pointerEvents = 'none';
+const base = {
+  'Light gray': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {maxZoom:19, maxNativeZoom:16, attribution:'Esri'}),
+  'Topographic (USGS)': L.tileLayer('https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}', {maxZoom:19, maxNativeZoom:16, attribution:'USGS The National Map'}),
+  'Satellite': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {maxZoom:19, attribution:'Esri, Maxar, Earthstar Geographics'}),
+  'Streets (OpenStreetMap)': L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, attribution:'&copy; OpenStreetMap contributors'})
+};
+base['Light gray'].addTo(map);
+L.control.layers(base, null, {position:'topright'}).addTo(map);
+
+/* watershed boundary: everything else is clipped to it */
+const wsPromise = (async () => {
+  let fc = await arcQuery(WBD + '/5', {where:`huc10='${HUC10}'`}).catch(() => null);
+  if(!fc?.features?.length) fc = await arcQuery(WBD + '/6', {where:`huc12 LIKE '${HUC10}%'`});
+  if(!fc.features.length) throw new Error('no boundary returned');
+  let ws = fc.features[0]; for(let i = 1; i < fc.features.length; i++) ws = turf.union(ws, fc.features[i]);
+  WS = ws; WSF = turf.buffer(turf.simplify(ws, {tolerance:0.0008}), 1, {units:'kilometers'});
+  const [w,s,e,n] = turf.bbox(ws);
+  BBOX = {w:+(w-.02).toFixed(4), s:+(s-.02).toFixed(4), e:+(e+.02).toFixed(4), n:+(n+.02).toFixed(4)};
+  map.fitBounds([[s,w],[n,e]], {padding:[20,20]});
+  return ws;
+})();
+const wsReady = wsPromise.catch(() => null);
+
+/* layers (draft 1, per Aug 7 notes) */
+const LAYERS = [
+  {id:'boundary', label:'Watershed boundary', sym:'border:2px solid #000', on:true,
+   src:['USGS Watershed Boundary Dataset, HUC10 1206020201','https://www.usgs.gov/national-hydrography/watershed-boundary-dataset'],
+   build: async () => {
+     const ws = await wsPromise, g = ws.geometry;
+     const rings = (g.type === 'MultiPolygon' ? g.coordinates.map(p => p[0]) : [g.coordinates[0]]).map(r => r.map(([x,y]) => [y,x]));
+     const mi2 = turf.area(ws) / 2589988;
+     return L.layerGroup([
+       L.polygon([[[-89,-179],[-89,179],[89,179],[89,-179]], ...rings], {pane:'mask', stroke:false, fillColor:'#888', fillOpacity:.45, interactive:false}),
+       L.geoJSON(ws, {pane:'lines', style:{color:'#000', weight:2, fill:false}})
+         .bindPopup(`<b>Paluxy River watershed</b><br>HUC10 ${HUC10}<br>${mi2.toFixed(0)} sq mi; outlet at the Brazos River, Glen Rose`)
+     ]);
+   }, count: () => ''},
+  {id:'streams', label:'Paluxy River and tributaries', sym:'height:3px;margin-top:7px;background:#0000FF', on:true,
+   src:['USGS National Hydrography Dataset (NHD)','https://www.usgs.gov/national-hydrography/national-hydrography-dataset'],
+   build: async () => {
+     await wsReady;
+     const url = await nhdLayer([/flowline.*large/i, /flowline/i]);
+     const nm = f => f.properties.gnis_name ?? f.properties.GNIS_NAME ?? '';
+     const feats = (await arcQueryAll(url, {...env(), where:'gnis_name IS NOT NULL', outFields:'gnis_name', maxAllowableOffset:0.0002}))
+       .filter(f => { const c = f.geometry?.type === 'MultiLineString' ? f.geometry.coordinates[0] : f.geometry?.coordinates; return c && inWS(c[c.length >> 1]); });
+     return L.geoJSON({type:'FeatureCollection', features:feats}, {pane:'lines',
+       style: f => /paluxy/i.test(nm(f)) ? {color:'#0000FF', weight:3} : {color:'#0000FF', weight:1.5}})
+       .bindTooltip(l => esc(nm(l.feature)), {sticky:true});
+   }, count: l => `${l.getLayers().length} named reaches`},
+  {id:'springs', label:'Springs', sym:'border-radius:50%;background:#00A000;border:1px solid #000', on:true,
+   src:['USGS NHD points, spring/seep (FType 458)','https://www.usgs.gov/national-hydrography/national-hydrography-dataset'],
+   build: async () => {
+     await wsReady;
+     const url = await nhdLayer([/^point$/i, /nhdpoint/i, /^point/i]);
+     const g = L.featureGroup();
+     (await arcQueryAll(url, {...env(), where:'ftype=458'})).filter(f => inWS(f.geometry.coordinates)).forEach(f =>
+       L.circleMarker([f.geometry.coordinates[1], f.geometry.coordinates[0]], dot('#00A000', 5, '#000'))
+         .bindPopup(`<b>${esc(f.properties.gnis_name || 'Spring or seep')}</b><br>Source: USGS NHD`).addTo(g));
+     return g;
+   }, count: l => `${l.getLayers().length} springs`},
+  {id:'tceq', label:'TCEQ surface water quality monitoring stations', sym:'background:#FFD700;border:1px solid #000', on:true,
+   src:['TCEQ SWQM data, via the Water Quality Portal','https://www.waterqualitydata.us/'],
+   build: async () => {
+     await wsReady;
+     const j = await getJSON(`https://www.waterqualitydata.us/data/Station/search?bBox=${BBOX.w},${BBOX.s},${BBOX.e},${BBOX.n}&organization=TCEQMAIN&mimeType=geojson&zip=no`, 90000);
+     const g = L.featureGroup();
+     (j.features || []).filter(f => inWS(f.geometry.coordinates)).forEach(f => {
+       const p = f.properties, id = p.MonitoringLocationIdentifier;
+       const data = `https://www.waterqualitydata.us/data/Result/search?siteid=${encodeURIComponent(id)}&mimeType=csv&zip=yes`;
+       L.circleMarker([f.geometry.coordinates[1], f.geometry.coordinates[0]], {...dot('#FFD700', 5.5, '#000')})
+         .bindPopup(`<b>${esc(p.MonitoringLocationName)}</b><br>Station ${esc(id.replace('TCEQMAIN-',''))}<br>Sampling events on record: ${esc(p.activityCount ?? 'n/a')}
+           <br><a href="${esc(p.siteUrl)}" target="_blank" rel="noopener">Station page</a> | <a href="${data}" target="_blank" rel="noopener">Download all results (CSV)</a>
+           <br><a href="https://www.tceq.texas.gov/waterquality/monitoring" target="_blank" rel="noopener">TCEQ SWQM data viewer</a>`).addTo(g);
+     });
+     return g;
+   }, count: l => `${l.getLayers().length} stations`},
+  {id:'outfalls', label:'Wastewater outfalls (permitted dischargers)', sym:'background:#FF0000;border:1px solid #000;transform:rotate(45deg);width:11px;height:11px;margin:3px 0 0 2px', on:true,
+   src:['EPA ECHO, Clean Water Act (NPDES/TPDES) facilities','https://echo.epa.gov/'],
+   build: async () => {
+     await wsReady;
+     const {w,s,e,n} = BBOX;
+     const j1 = await getJSON(`https://echodata.epa.gov/echo/cwa_rest_services.get_facilities?output=JSON&p_c1lat=${n}&p_c1lon=${w}&p_c2lat=${s}&p_c2lon=${e}`);
+     const qid = j1?.Results?.QueryID; if(!qid) throw new Error('no results');
+     const j2 = await getJSON(`https://echodata.epa.gov/echo/cwa_rest_services.get_qid?output=JSON&qid=${qid}&pageno=1`);
+     const g = L.featureGroup();
+     (j2?.Results?.Facilities || []).filter(f => f.FacLat && inWS([+f.FacLong, +f.FacLat])).forEach(f =>
+       L.marker([+f.FacLat, +f.FacLong], {icon: L.divIcon({className:'', iconSize:[10,10], html:'<div style="width:9px;height:9px;background:#FF0000;border:1px solid #000;transform:rotate(45deg)"></div>'})})
+         .bindPopup(`<b>${esc(f.CWPName)}</b><br>Permit ${esc(f.SourceID)}<br>${esc(f.CWPPermitTypeDesc || '')}
+           <br><a href="https://echo.epa.gov/detailed-facility-report?fid=${esc(f.RegistryID)}" target="_blank" rel="noopener">EPA facility report</a>`).addTo(g));
+     return g;
+   }, count: l => `${l.getLayers().length} facilities`},
+  {id:'gages', label:'USGS stream gages', sym:'width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:13px solid #000', on:true,
+   src:['USGS Water Data','https://waterdata.usgs.gov/'],
+   build: async () => {
+     const g = L.featureGroup();
+     (await gageSites()).forEach(x => L.marker([x.lat, x.lon], {icon: L.divIcon({className:'', iconSize:[14,13], iconAnchor:[7,9],
+       html:'<div style="width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:13px solid #000"></div>'})})
+       .bindPopup(`<b>${esc(x.name)}</b><br>USGS ${esc(x.id)}<br>${x.q != null ? `Latest flow: ${x.q.toLocaleString()} cfs` : 'No current reading'}
+         <br><a href="https://waterdata.usgs.gov/monitoring-location/USGS-${esc(x.id)}/" target="_blank" rel="noopener">Gage page and full record</a>`).addTo(g));
+     return g;
+   }, count: l => `${l.getLayers().length} gages`},
+  {id:'nlcd', label:'Land cover (NLCD 2021)', sym:'background:linear-gradient(90deg,#008000,#FFFF00,#FF0000)', on:false,
+   src:['MRLC National Land Cover Database','https://www.mrlc.gov/data'],
+   build: async () => L.tileLayer.wms('https://www.mrlc.gov/geoserver/mrlc_display/NLCD_2021_Land_Cover_L48/wms', {layers:'NLCD_2021_Land_Cover_L48', format:'image/png', transparent:true, opacity:.6, attribution:'MRLC NLCD'}),
+   count: () => ''},
+  {id:'imperv', label:'Impervious cover (NLCD 2021)', sym:'background:linear-gradient(90deg,#fff,#FF0000)', on:false,
+   src:['MRLC NLCD impervious surface','https://www.mrlc.gov/data'],
+   build: async () => L.tileLayer.wms('https://www.mrlc.gov/geoserver/mrlc_display/NLCD_2021_Impervious_L48/wms', {layers:'NLCD_2021_Impervious_L48', format:'image/png', transparent:true, opacity:.7, attribution:'MRLC NLCD'}),
+   count: () => ''},
+  {id:'wells', label:'Wells', sym:'border-radius:50%;background:#fff;border:2px solid #FF8000', on:true, file:'data/twdb_wells.geojson',
+   src:['TWDB Groundwater Database','https://www3.twdb.texas.gov/apps/WaterDataInteractive/GroundWaterDataViewer']},
+  {id:'datacenters', label:'Data center footprints', sym:'background:rgba(128,0,128,.4);border:1.5px solid #800080', on:true, file:'data/data_centers.geojson',
+   src:['Alex Ford, The Texas Tribune','https://www.texastribune.org/']}
+];
+
+/* file-backed layers (hosted pages only) */
+LAYERS.filter(d => d.file).forEach(d => {
+  const color = d.id === 'wells' ? '#FF8000' : '#800080';
+  d.build = async () => {
+    const fc = await getJSON(d.file, 20000).catch(() => { throw new Error(`pending: add ${d.file}`); });
+    await wsReady;
+    fc.features = fc.features.filter(f => { try{ return f.geometry.type === 'Point' ? inWS(f.geometry.coordinates) : !WSF || turf.booleanIntersects(f, WSF); }catch(e){ return true; } });
+    return L.geoJSON(fc, {pane:'lines',
+      style: {color, weight:1.5, fillColor:color, fillOpacity:.4},
+      pointToLayer: (f, ll) => L.circleMarker(ll, d.id === 'wells' ? {radius:4, color, weight:2, fillColor:'#fff', fillOpacity:1} : dot(color)),
+      onEachFeature: (f, l) => l.bindPopup(`<b>${esc(f.properties?.name || f.properties?.StateWellNumber || d.label)}</b><br>` +
+        Object.entries(f.properties || {}).filter(([,v]) => v != null && v !== '' && typeof v !== 'object').slice(0, 10).map(([k,v]) => `${esc(k)}: ${esc(v)}`).join('<br>'))});
+  };
+  d.count = l => {
+    if(d.id === 'datacenters'){
+      const ac = turf.area(l.toGeoJSON()) / 4046.8564;
+      if(ac > 0){ const i = document.getElementById('scnAcres'); if(i){ i.value = Math.round(ac); drawScenario(); } }
+    }
+    return `${l.getLayers().length} features`;
+  };
+});
+
+/* USGS gages inside the watershed (shared by the gage layer and the runoff scenario) */
+let gagePromise = null;
+function gageSites(){
+  return gagePromise ??= (async () => {
+    await wsReady;
+    const {w,s,e,n} = BBOX;
+    const j = await getJSON(`https://waterservices.usgs.gov/nwis/iv/?format=json&bBox=${w},${s},${e},${n}&parameterCd=00060&siteStatus=active`);
+    const by = {};
+    for(const ts of j.value.timeSeries){
+      const si = ts.sourceInfo, g = si.geoLocation.geogLocation, v = ts.values?.[0]?.value?.[0];
+      by[si.siteCode[0].value] = {id:si.siteCode[0].value, name:si.siteName, lat:+g.latitude, lon:+g.longitude, q: v && +v.value >= 0 ? +v.value : null};
+    }
+    return Object.values(by).filter(x => inWS([x.lon, x.lat]));
+  })().catch(e => { gagePromise = null; throw e; });
+}
+
+/* Runoff scenario: now vs. with data centers (screening estimate, SWAT-style water balance terms) */
+const SC = {base:null, dcAcres:null};
+async function loadBaseline(){
+  const sites = await gageSites();
+  if(!sites.length) throw new Error('no active gage in the watershed');
+  const gage = sites.sort((a,b) => b.lon - a.lon)[0];                       // most downstream (easternmost) gage
+  const start = `${new Date().getFullYear() - 10}-01-01`;
+  const j = await getJSON(`https://waterservices.usgs.gov/nwis/dv/?format=json&sites=${gage.id}&parameterCd=00060&statCd=00003&startDT=${start}`);
+  const q = (j.value.timeSeries?.[0]?.values?.[0]?.value || []).map(x => +x.value).filter(x => x >= 0);
+  if(q.length < 730) throw new Error('not enough daily record');
+  // Lyne–Hollick digital filter (alpha 0.925) separates baseflow (subsurface) from quickflow (surface runoff)
+  let qf = 0, bsum = 0, qsum = 0;
+  q.forEach((x,i) => { if(i){ qf = Math.min(Math.max(.925*qf + .9625*(x - q[i-1]), 0), x); } bsum += x - qf; qsum += x; });
+  // drainage area of the gage
+  let da = null;
+  try{
+    const rdb = await (await fetch(`https://waterservices.usgs.gov/nwis/site/?format=rdb&sites=${gage.id}&siteOutput=expanded`)).text();
+    const lines = rdb.split('\n').filter(l => l && !l.startsWith('#')), hdr = lines[0].split('\t'), row = lines[2].split('\t');
+    da = parseFloat(row[hdr.indexOf('drain_area_va')]);
+  }catch(e){}
+  if(!da || isNaN(da)) da = turf.area(WS) / 2589988;
+  const inches = cfsMean => cfsMean * 1.9835 * 365.25 / (da * 640) * 12;   // mean cfs -> inches/yr over the drainage area
+  SC.base = {gage, da, years: (q.length/365.25).toFixed(1), total: inches(qsum/q.length), sub: inches(bsum/q.length)};
+  SC.base.surf = SC.base.total - SC.base.sub;
+}
+function drawScenario(){
+  const out = document.getElementById('scnOut'); if(!out) return;
+  if(!SC.base){ return; }
+  const A = turf.area(WS) / 4046.8564;                                         // watershed acres
+  const acres = Math.max(0, +document.getElementById('scnAcres').value || 0);
+  const P = Math.max(0, +document.getElementById('scnP').value || 0);
+  const f = Math.min(acres / A, 1), b = SC.base, C = 0.9;                      // C: runoff coefficient for roofs/pavement
+  const now = {surf:b.surf, sub:b.sub}; const dc = {surf:(1-f)*b.surf + f*C*P, sub:(1-f)*b.sub};
+  now.total = now.surf + now.sub; dc.total = dc.surf + dc.sub;
+  const af = x => x / 12 * A;                                                  // inches over watershed -> acre-ft/yr
+  const rows = [['Stream flow','total'],['Surface runoff','surf'],['Subsurface flow (baseflow)','sub']];
+  const mx = Math.max(...rows.flatMap(([,k]) => [af(now[k]), af(dc[k])]));
+  const W = 270, bh = 11;
+  let svg = `<svg width="${W}" height="${rows.length*38}" role="img" aria-label="Now vs with data centers">`;
+  rows.forEach(([lab,k],i) => {
+    const y = i*38; const w1 = af(now[k])/mx*(W-70), w2 = af(dc[k])/mx*(W-70);
+    svg += `<text x="0" y="${y+9}" font-size="11">${lab}</text>
+      <rect x="0" y="${y+12}" width="${w1}" height="${bh}" fill="#808080"/><text x="${w1+4}" y="${y+21}" font-size="10">${Math.round(af(now[k])).toLocaleString()}</text>
+      <rect x="0" y="${y+24}" width="${w2}" height="${bh}" fill="#0000FF"/><text x="${w2+4}" y="${y+33}" font-size="10">${Math.round(af(dc[k])).toLocaleString()}</text>`;
+  });
+  svg += '</svg>';
+  const pct = k => ((dc[k]/now[k] - 1) * 100).toFixed(1);
+  out.innerHTML = `${svg}
+    <div style="font-size:11px"><span style="color:#808080">&#9632;</span> Now &nbsp; <span style="color:#0000FF">&#9632;</span> With data centers &nbsp; (acre-feet per year)</div>
+    <table><tr><th></th><th>Change</th></tr>
+      <tr><td>Stream flow</td><td>${pct('total')}%</td></tr><tr><td>Surface runoff</td><td>${pct('surf')}%</td></tr><tr><td>Subsurface flow</td><td>${pct('sub')}%</td></tr></table>
+    <div class="note">Baseline: ${esc(b.gage.name)} (USGS ${esc(b.gage.id)}), ${b.years} years of daily flow, split into surface and subsurface flow with a digital baseflow filter.</div>`;
+}
+const Scenario = L.Control.extend({onAdd(){
+  const div = L.DomUtil.create('div', 'scn');
+  L.DomEvent.disableClickPropagation(div); L.DomEvent.disableScrollPropagation(div);
+  div.innerHTML = `<h2>Now vs. with data centers</h2>
+    <div class="in"><label for="scnAcres">Data center area (acres)</label><input id="scnAcres" type="number" min="0" step="10" value="250">
+      <label for="scnP">Annual rainfall (in)</label><input id="scnP" type="number" min="0" step="1" value="34"></div>
+    <div id="scnOut"><span class="st">Loading gage record…</span></div>
+    <div class="note">Screening estimate, not a SWAT run. Assumes new roofs and pavement shed 90% of rain as surface runoff and no longer recharge groundwater. To be replaced by <a href="https://dev.hawqs.tamu.edu/" target="_blank" rel="noopener">HAWQS</a> (SWAT) results; see also <a href="https://modelmywatershed.org/" target="_blank" rel="noopener">Model My Watershed</a>.</div>`;
+  div.querySelectorAll('input').forEach(i => i.addEventListener('input', drawScenario));
+  return div;
+}});
+new Scenario({position:'bottomleft'}).addTo(map);
+wsPromise.then(loadBaseline).then(drawScenario)
+  .catch(e => { const o = document.getElementById('scnOut'); if(o) o.innerHTML = `<span class="st err">Could not load baseline (${esc(e.message)})</span>`; });
+
+/* key (legend + toggles + sources) */
+const Key = L.Control.extend({onAdd(){
+  const div = L.DomUtil.create('div', 'key');
+  L.DomEvent.disableClickPropagation(div); L.DomEvent.disableScrollPropagation(div);
+  div.innerHTML = `<h1>Paluxy River watershed</h1>`;
+  LAYERS.forEach(d => {
+    const row = L.DomUtil.create('div', 'item', div);
+    row.innerHTML = `<input type="checkbox" id="k_${d.id}"><span class="sym" style="${d.sym}"></span>
+      <label for="k_${d.id}">${esc(d.label)}<span class="src"><a href="${esc(d.src[1])}" target="_blank" rel="noopener">${esc(d.src[0])}</a></span><span class="st"></span></label>`;
+    d.cb = row.querySelector('input'); d.st = row.querySelector('.st'); d.cb.checked = d.on;
+    d.cb.onchange = () => toggle(d, d.cb.checked);
+  });
+  return div;
+}});
+new Key({position:'topleft'}).addTo(map);
+
+function status(d, msg, err){ d.st.textContent = msg; d.st.className = 'st' + (err ? ' err' : ''); }
+async function toggle(d, on){
+  if(!on){ if(d.layer) map.removeLayer(d.layer); return; }
+  if(!d.promise){
+    status(d, 'loading…');
+    d.promise = d.build().then(l => { d.layer = l; status(d, d.count(l)); return l; })
+      .catch(e => { d.promise = null; status(d, e.message.startsWith('pending') ? e.message.replace('pending: ', 'Pending: ') : 'Could not load (' + e.message + ')', true); throw e; });
+  }
+  try{ const l = await d.promise; if(d.cb.checked) l.addTo(map); }catch(e){ d.cb.checked = false; }
+}
+LAYERS.forEach(d => d.on && toggle(d, true));
+</script>
+</body>
+</html>
