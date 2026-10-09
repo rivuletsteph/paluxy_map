@@ -16,7 +16,9 @@
 <style>
   :root{--ink:#222;--muted:#666;--rule:#bbb;font-family:"Source Serif 4",Georgia,"Times New Roman",serif}
   html,body{margin:0;height:100%;color:var(--ink)}
-  #map{position:absolute;inset:0;background:#f2f2f2}
+  body{display:flex;flex-direction:column}
+  .draft-banner{flex:none;margin:0;padding:8px 16px;background:#fff4d6;border-bottom:1px solid #d9b24c;color:#5a4300;font-size:14px;line-height:1.35;text-align:center}
+  #map{position:relative;flex:1;min-height:0;background:#f2f2f2}
   .key{background:#fff;border:1px solid var(--rule);padding:12px 14px;max-width:290px;font-size:13px;line-height:1.35;max-height:calc(100vh - 40px);overflow-y:auto}
   .key h1{font-size:15px;font-weight:600;margin:0 0 8px}
   .item{display:grid;grid-template-columns:16px 18px 1fr;gap:6px;align-items:start;padding:4px 0;border-top:1px solid #eee}
@@ -42,6 +44,7 @@
 </style>
 </head>
 <body>
+<p class="draft-banner" role="note"><strong>Draft</strong> — not reviewed or endorsed by TIAER or Tarleton State University.</p>
 <div id="map" role="application" aria-label="Map of the Paluxy River watershed"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Turf.js/6.5.0/turf.min.js"></script>
