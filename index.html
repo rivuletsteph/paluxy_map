@@ -1392,22 +1392,35 @@ const LAYERS = [
   {
     id: 'springs',
     group: 'Hydrography',
-    file: 'NHD_Springs.geojson',
+    file: 'twdb_springs.geojson',
     name: 'Springs',
-    desc: n => `${n} springs and seeps · NHD`,
+    desc: n => `${n} springs on record · TWDB and USGS`,
     type: 'points',
     marker: 'circle',
     on: true,
     style: { radius: 4.5, fillColor: '#4caf50', color: '#1b5e20', weight: 1.4, fillOpacity: 0.95 },
-    popup: p => `
-      <div class="pop-title">${esc(p.NAME || 'Spring or seep')}</div>
-      <div class="pop-row"><span>Feature</span><span>Spring/seep (NHD FType 458)</span></div>
-      <div class="pop-row"><span>Source</span><span>USGS NHD</span></div>`,
-    legend: { swatch: 'dot', color: '#4caf50', stroke: '#1b5e20', text: 'Spring or seep' },
+    popup: p => {
+      const row = (k, v) => v != null && v !== '' ? `<div class="pop-row"><span>${k}</span><span>${esc(v)}</span></div>` : '';
+      return `
+      <div class="pop-title">${esc(p.NAME || (p.StateWellNumber ? 'Spring ' + p.StateWellNumber : 'Spring or seep'))}</div>
+      ${row('State well no.', p.NAME ? p.StateWellNumber : '')}
+      ${row('Flow on record', p.Flow_gpm != null ? `${p.Flow_gpm} gal/min (${p.Flow_how || 'reported'}, date not recorded)` : '')}
+      ${row('Aquifer', p.Aquifer)}${row('Use', p.Use)}
+      ${row('Elevation', p.Elevation_ft != null ? Number(p.Elevation_ft).toLocaleString() + ' ft' : '')}
+      ${row('County', p.County)}
+      ${p.Remarks ? `<div class="pop-note">${esc(p.Remarks)}</div>` : ''}
+      <div class="pop-row"><span>Source</span><span>${esc(p.Sources || 'USGS NHD')}</span></div>
+      ${p.USGSSiteNumber ? `<div class="pop-links">${dl(`https://waterdata.usgs.gov/monitoring-location/USGS-${encodeURIComponent(p.USGSSiteNumber)}/`, 'USGS site page →')}</div>` : ''}`;
+    },
+    legend: { swatch: 'dot', color: '#4caf50', stroke: '#1b5e20', text: 'Spring' },
     load: loadSprings,
     meta: {
-      source: { text: 'USGS NHD points, spring/seep (FType 458)', url: 'https://www.usgs.gov/national-hydrography/national-hydrography-dataset' },
-      rows: [['Selection', 'Watershed + 1 km']]
+      source: { text: 'TWDB Groundwater Database (springs) and USGS/TWDB springs database, OFR 03-315', url: 'https://pubs.usgs.gov/of/2003/ofr03-315/' },
+      rows: [
+        ['Selection', 'Springs within the watershed + 1 km, from the GWDB Well Data download (5 Nov 2026); names, remarks and flows joined from OFR 03-315 by state well number'],
+        ['Why not NHD', 'The NHD has no spring/seep points in the Paluxy watershed; it is the fallback if this file is missing'],
+        ['Gaps', 'Public records list only a few springs here. Brune\u2019s <i>Springs of Texas</i> and local knowledge will add more']
+      ]
     }
   },
 
