@@ -1183,6 +1183,11 @@ const WQ_LINKS = [
   ['Brazos River Authority CRP reports', 'https://brazos.org/About-Us/Environmental/Texas-Clean-Rivers-Program/Program-Documents']
 ];
 // Data center footprints: credit the Tribune and link the story on every use.
+// Each project in the colour the Tribune's Hood County map gives it.
+const DC_COLORS = {
+  'Comanche Circle': '#177B9E', 'Project Patriot': '#1B5299', 'Project Spectrum': '#FF7F00', 'Fort Spunky': '#6A3D9A',
+  'Project Red': '#E31A1C', 'Project Yellow': '#EDAB02', 'Project Panther': '#33A02C', 'Project Lion': '#156931'
+};
 const TRIBUNE_STORY = 'https://www.texastribune.org/2026/06/02/texas-data-centers-hood-county-local-control-rural-water-power/';
 // TIAER's guidance for sampling well water for bacteria.
 const SAMPLING_GUIDE = 'https://www.tarleton.edu/tiaer/drinking-water-bacteria-testing/';
@@ -1211,7 +1216,8 @@ const LAYERS = [
     type: 'polygon',
     on: true,
     noClip: true,   // all eight projects, including the four outside the watershed
-    style: { color: '#6a1b9a', weight: 1.8, fillColor: '#8e44ad', fillOpacity: 0.40 },
+    style: p => { const c = DC_COLORS[p.name] || '#6a1b9a'; return { color: c, weight: 1.8, fillColor: c, fillOpacity: 0.45 }; },
+    tooltip: p => p.name,
     popup: p => `
       <div class="pop-title">${esc(p.name || 'Proposed data center')}</div>
       ${p.developer ? `<div class="pop-row"><span>Developer</span><span>${esc(p.developer)}</span></div>` : ''}
@@ -1219,12 +1225,15 @@ const LAYERS = [
       ${p.acres_in_watershed != null ? `<div class="pop-row"><span>Inside the Paluxy watershed</span><span>${Number(p.acres_in_watershed).toLocaleString()} ac</span></div>` : ''}
       <div class="pop-row"><span>Source</span><span>The Texas Tribune</span></div>
       <div class="pop-links">${dl(TRIBUNE_STORY, 'The 8 data centers that could transform one Texas county →')}</div>`,
-    legend: { swatch: 'fill', color: '#6a1b9a', fill: 'rgba(142,68,173,0.40)', text: 'Data center footprint (proposed)' },
+    rowSwatch: { swatch: 'ramp', colors: Object.values(DC_COLORS) },
+    legendTitle: 'Data center footprints (proposed)',
+    legendRows: Object.entries(DC_COLORS).map(([t, c]) => ({ swatch: 'fill', color: c, fill: c + '73', text: t })),
     meta: {
       source: { text: 'The Texas Tribune, “The 8 data centers that could transform one Texas county” (2 June 2026)', url: TRIBUNE_STORY },
       rows: [
         ['Projects', 'All eight in the story, as the Tribune drew them for its Hood County map: Comanche Circle, Patriot, Spectrum, Fort Spunky, Red, Yellow, Panther and Lion. Four of them (Comanche Circle, Spectrum, Panther, Lion) sit inside the watershed, and part of Yellow'],
         ['Attributes', 'Project name, developer where the Tribune names one, and acreage'],
+        ['Colours', 'Each project in the colour the Tribune\u2019s map uses for it'],
         ['Feeds', 'The data center acreage in “Now vs. with data centers” (the part inside the watershed)']
       ]
     }
