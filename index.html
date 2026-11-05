@@ -1118,6 +1118,11 @@ svg.leaflet-image-layer.leaflet-interactive path {
     </div>
 
     <div class="sidebar-section">
+      <div class="sidebar-label">Test your water</div>
+      <div class="scn-note" style="margin-top:0;font-size:12px;color:var(--text-secondary);">On a private well? TIAER's lab tests drinking water for coliform bacteria and <i>E. coli</i>. Its guidance walks through collecting a sample and getting it to the lab: <a href="https://www.tarleton.edu/tiaer/drinking-water-bacteria-testing/" target="_blank" rel="noopener">Drinking water bacteria testing (TIAER) →</a></div>
+    </div>
+
+    <div class="sidebar-section">
       <div class="sidebar-label">Now vs. with data centers</div>
       <div class="scn-in">
         <label for="scnAcres">Data center area (acres)</label><input id="scnAcres" type="number" min="0" step="10" value="250">
@@ -1179,6 +1184,8 @@ const WQ_LINKS = [
 ];
 // Data center footprints: credit the Tribune and link the story on every use.
 const TRIBUNE_STORY = 'https://www.texastribune.org/2026/06/02/texas-data-centers-hood-county-local-control-rural-water-power/';
+// TIAER's guidance for sampling well water for bacteria.
+const SAMPLING_GUIDE = 'https://www.tarleton.edu/tiaer/drinking-water-bacteria-testing/';
 const wqLinksHTML = () => WQ_LINKS.map(([t, u]) => `<a href="${u}" target="_blank" rel="noopener">${t} →</a>`).join('');
 const dl = (url, text) => `<a href="${url}" target="_blank" rel="noopener">${text}</a>`;
 
@@ -1300,6 +1307,7 @@ const LAYERS = [
       ${row('Water levels', p.WaterLevelObs)}${row('Water quality data', p.WaterQualityAvailable)}
       <div class="pop-links">
         ${dl('https://www3.twdb.texas.gov/apps/WaterDataInteractive/GroundwaterDataViewer/?map=gwdb', 'TWDB Groundwater Data Viewer →')}
+        ${dl(SAMPLING_GUIDE, 'How to sample your well water (TIAER) →')}
         ${p.USGSSiteNumber ? dl(`https://waterdata.usgs.gov/monitoring-location/USGS-${encodeURIComponent(p.USGSSiteNumber)}/`, 'USGS site page →') : ''}
       </div>`;
     },
