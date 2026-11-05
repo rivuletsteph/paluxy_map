@@ -823,6 +823,13 @@ svg.leaflet-image-layer.leaflet-interactive path {
     overflow: hidden;
   }
 
+  /* ── Draft banner (public page) ── */
+  .draft-banner {
+    flex-shrink: 0; margin: 0; padding: 8px 16px;
+    background: #fff4d6; border-bottom: 1px solid #d9b24c; color: #5a4300;
+    font-size: 13px; line-height: 1.35; text-align: center;
+  }
+
   /* ── Header ── */
   header {
     background: var(--panel);
@@ -1073,12 +1080,14 @@ svg.leaflet-image-layer.leaflet-interactive path {
 </head>
 <body>
 
+<p class="draft-banner" role="note"><strong>Draft</strong> — not reviewed or endorsed by TIAER or Tarleton State University.</p>
+
 <header>
   <div class="header-left">
     <span class="header-title">Paluxy River Watershed</span>
     <span class="header-sub">HUC-10 1206020201 · Brazos River Basin</span>
   </div>
-  <span class="header-badge">TIAER Project Map · draft 2 · 23 Oct 2026</span>
+  <span class="header-badge">Project map · draft 2 · 23 Oct 2026</span>
 </header>
 
 <div class="main">
@@ -1122,10 +1131,9 @@ svg.leaflet-image-layer.leaflet-interactive path {
       <button id="export-btn" onclick="exportPNG()">⬇ Export PNG</button>
       <div id="export-status"></div>
       <div class="footer-text">
-        TIAER · Tarleton State University<br>
         Data Centers &amp; Your Water — Paluxy River<br>
         Draft 2 · updated 23 Oct 2026 · data load live from each agency<br>
-        Kaitlyn Tran · Stephanie Brady · 🤖 Created with <a href="https://claude.ai" target="_blank" rel="noopener">Claude</a>
+        🤖 Created with <a href="https://claude.ai" target="_blank" rel="noopener">Claude</a>
       </div>
     </div>
   </div>
