@@ -1690,7 +1690,10 @@ async function loadOutfalls() {
   const j1 = await getJSON(`https://echodata.epa.gov/echo/cwa_rest_services.get_facilities?output=JSON&p_c1lat=${n}&p_c1lon=${w}&p_c2lat=${s}&p_c2lon=${e}`);
   const qid = j1?.Results?.QueryID;
   if (!qid) throw new Error('ECHO returned no query');
-  const j2 = await getJSON(`https://echodata.epa.gov/echo/cwa_rest_services.get_qid?output=JSON&qid=${qid}&pageno=1`);
+  // Ask for the columns by ID: ECHO's default column set no longer includes
+  // FacLat or the permit status and type (name, ID, city, registry ID,
+  // county, lat, long, status, type).
+  const j2 = await getJSON(`https://echodata.epa.gov/echo/cwa_rest_services.get_qid?output=JSON&qid=${qid}&pageno=1&qcolumns=1,2,4,9,12,26,27,53,56`);
   const feats = (j2?.Results?.Facilities || [])
     .filter(f => f.FacLat && f.FacLong && nearWS([+f.FacLong, +f.FacLat]))
     .map(f => {
