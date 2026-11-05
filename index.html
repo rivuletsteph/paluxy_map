@@ -1284,17 +1284,34 @@ const LAYERS = [
     group: 'Monitoring',
     file: 'twdb_wells.geojson',
     name: 'Wells',
-    desc: n => `${n} wells · TWDB`,
-    pendingDesc: 'Pending — export from the TWDB Groundwater Database',
+    desc: n => `${n} wells · TWDB Groundwater Database`,
+    pendingDesc: 'Pending — geojsons/twdb_wells.geojson not found',
     type: 'points',
     marker: 'ring',
     on: true,
     style: { radius: 4, color: '#d9730d', weight: 2, fillColor: '#ffffff', fillOpacity: 1 },
-    popup: p => genericPopup(p, p.StateWellNumber ? 'Well ' + p.StateWellNumber : 'Well'),
+    popup: p => {
+      const row = (k, v) => v != null && v !== '' ? `<div class="pop-row"><span>${k}</span><span>${esc(v)}</span></div>` : '';
+      return `
+      <div class="pop-title">Well ${esc(p.StateWellNumber || '')}</div>
+      ${row('Use', p.WellUse)}${row('Type', p.WellType)}${row('Aquifer', p.Aquifer)}
+      ${row('Depth', p.WellDepth != null ? Number(p.WellDepth).toLocaleString() + ' ft' : '')}
+      ${row('Drilled', p.DrillingYear)}${row('County', p.County)}
+      ${row('Water levels', p.WaterLevelObs)}${row('Water quality data', p.WaterQualityAvailable)}
+      <div class="pop-links">
+        ${dl('https://www3.twdb.texas.gov/apps/WaterDataInteractive/GroundwaterDataViewer/?map=gwdb', 'TWDB Groundwater Data Viewer →')}
+        ${p.USGSSiteNumber ? dl(`https://waterdata.usgs.gov/monitoring-location/USGS-${encodeURIComponent(p.USGSSiteNumber)}/`, 'USGS site page →') : ''}
+      </div>`;
+    },
     legend: { swatch: 'ring', color: '#d9730d', text: 'Well (TWDB)' },
     meta: {
-      source: { text: 'TWDB Groundwater Database', url: 'https://www3.twdb.texas.gov/apps/WaterDataInteractive/GroundWaterDataViewer' },
-      rows: [['Status', 'Pending — save the export as geojsons/twdb_wells.geojson']]
+      source: { text: 'TWDB Groundwater Database (GWDB), Well Data download', url: 'https://www.twdb.texas.gov/groundwater/data/data-well-reports.asp' },
+      rows: [
+        ['Selection', 'GWDB wells within the watershed + 1 km; springs are in the Springs layer'],
+        ['Downloaded', '5 Nov 2026 (TWDB updates the file nightly)'],
+        ['Left out', 'Owner names'],
+        ['Note', 'The GWDB is TWDB\u2019s monitoring network, not every well; drillers\u2019 reports (SDR) are a separate database']
+      ]
     }
   },
 
