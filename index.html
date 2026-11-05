@@ -1210,9 +1210,11 @@ const LAYERS = [
     pendingDesc: 'Pending — geojsons/data_centers.geojson not found',
     type: 'polygon',
     on: true,
+    noClip: true,   // all eight projects, including the four outside the watershed
     style: { color: '#6a1b9a', weight: 1.8, fillColor: '#8e44ad', fillOpacity: 0.40 },
     popup: p => `
       <div class="pop-title">${esc(p.name || 'Proposed data center')}</div>
+      ${p.developer ? `<div class="pop-row"><span>Developer</span><span>${esc(p.developer)}</span></div>` : ''}
       ${p.acres != null ? `<div class="pop-row"><span>Footprint</span><span>${Number(p.acres).toLocaleString()} ac</span></div>` : ''}
       ${p.acres_in_watershed != null ? `<div class="pop-row"><span>Inside the Paluxy watershed</span><span>${Number(p.acres_in_watershed).toLocaleString()} ac</span></div>` : ''}
       <div class="pop-row"><span>Source</span><span>The Texas Tribune</span></div>
@@ -1221,8 +1223,8 @@ const LAYERS = [
     meta: {
       source: { text: 'The Texas Tribune, “The 8 data centers that could transform one Texas county” (2 June 2026)', url: TRIBUNE_STORY },
       rows: [
-        ['Projects', 'Comanche Circle, Lion, Panther, Patriot, Red, Spectrum and Yellow, as the Tribune drew them for its Hood County map (Fort Spunky lies outside the watershed)'],
-        ['Attributes', 'Project name and acreage only'],
+        ['Projects', 'All eight in the story, as the Tribune drew them for its Hood County map: Comanche Circle, Patriot, Spectrum, Fort Spunky, Red, Yellow, Panther and Lion. Four of them (Comanche Circle, Spectrum, Panther, Lion) sit inside the watershed, and part of Yellow'],
+        ['Attributes', 'Project name, developer where the Tribune names one, and acreage'],
         ['Feeds', 'The data center acreage in “Now vs. with data centers” (the part inside the watershed)']
       ]
     }
@@ -1839,7 +1841,7 @@ function ensureLayer(cfg) {
       await wsReady;
       if (cfg.type === 'points') data = FC(data.features.filter(f => f.geometry?.type !== 'Point' || nearWS(f.geometry.coordinates)));
       else if (cfg.type === 'line') data = FC(data.features.flatMap(clipLine));
-      else if (cfg.id !== 'watershed' && cfg.id !== 'huc12') data = FC(data.features.filter(f => { try { return turf.booleanIntersects(f, WS_POINTS); } catch (e) { return true; } }));
+      else if (cfg.id !== 'watershed' && cfg.id !== 'huc12' && !cfg.noClip) data = FC(data.features.filter(f => { try { return turf.booleanIntersects(f, WS_POINTS); } catch (e) { return true; } }));
     } else if (cfg.load) {
       data = await cfg.load(); from = 'live';
     } else {
