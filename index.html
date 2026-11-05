@@ -1188,6 +1188,8 @@ const DC_COLORS = {
   'Comanche Circle': '#177B9E', 'Project Patriot': '#1B5299', 'Project Spectrum': '#FF7F00', 'Fort Spunky': '#6A3D9A',
   'Project Red': '#E31A1C', 'Project Yellow': '#EDAB02', 'Project Panther': '#33A02C', 'Project Lion': '#156931'
 };
+// Concept-plan parts, in plain words.
+const DC_PARTS = { 'dc-building': 'Data center building', 'equipment-yard': 'Equipment yard', 'support': 'Support building', 'utility': 'Utility area', 'water': 'Water (pond or tank)', 'fence': 'Fence', 'cemetery': 'Cemetery', 'mara-building': 'Existing MARA bitcoin mine building', 'mara-yard': 'Existing MARA bitcoin mine yard' };
 const TRIBUNE_STORY = 'https://www.texastribune.org/2026/06/02/texas-data-centers-hood-county-local-control-rural-water-power/';
 // TIAER's guidance for sampling well water for bacteria.
 const SAMPLING_GUIDE = 'https://www.tarleton.edu/tiaer/drinking-water-bacteria-testing/';
@@ -1206,6 +1208,79 @@ const NLCD_CLASSES = [
 const LAYERS = [
 
   /* ── Data centers ─────────────────────────────────────────────── */
+  // Sidebar order is paint order, so the concept-plan detail sits above the footprints.
+  {
+    id: 'dcwells',
+    group: 'Data centers',
+    file: 'dc_planned_wells.geojson',
+    name: 'Planned wells (concept plans)',
+    desc: n => `${n} wells in the developers' concept plans · The Texas Tribune`,
+    pendingDesc: 'Pending — geojsons/dc_planned_wells.geojson not found',
+    type: 'points',
+    marker: 'circle',
+    on: true,
+    noClip: true,
+    style: p => ({ radius: 4.5, fillColor: '#ffffff', color: DC_COLORS[p.project] || '#457b9d', weight: 2.5, fillOpacity: 1 }),
+    popup: p => `
+      <div class="pop-title">Planned well · ${esc(p.project)}</div>
+      <div class="pop-note">A groundwater well shown in the developer's concept plan, as mapped by the Texas Tribune.</div>
+      <div class="pop-links">${dl(TRIBUNE_STORY, 'The Texas Tribune story →')}</div>`,
+    legend: { swatch: 'ring', color: '#177B9E', text: 'Planned well (concept plan)' },
+    meta: {
+      source: { text: 'The Texas Tribune, Hood County data center map (concept plans)', url: TRIBUNE_STORY },
+      rows: [['Shows', 'Wells drawn on the concept plans the developers filed with Hood County, ringed in the project’s colour']]
+    }
+  },
+
+  {
+    id: 'dcplans',
+    group: 'Data centers',
+    file: 'dc_concept_plans.geojson',
+    name: 'Concept plans',
+    desc: n => `${n.toLocaleString()} buildings, yards and utility areas · shows when zoomed in`,
+    pendingDesc: 'Pending — geojsons/dc_concept_plans.geojson not found',
+    type: 'polygon',
+    on: true,
+    noClip: true,
+    minZoom: 13,
+    style: p => {
+      const c = DC_COLORS[p.project] || '#555';
+      return ({
+        'dc-building':    { color: c, weight: 0.8, fillColor: c, fillOpacity: 0.9 },
+        'equipment-yard': { color: c, weight: 0.5, fillColor: c, fillOpacity: 0.65 },
+        'support':        { color: c, weight: 0.8, fillColor: c, fillOpacity: 0.75 },
+        'utility':        { color: c, weight: 1.2, fillColor: c, fillOpacity: 0.15, dashArray: '3,3' },
+        'water':          { color: '#2f6db5', weight: 0.8, fillColor: '#8fb8e0', fillOpacity: 0.9 },
+        'fence':          { color: '#444', weight: 1, fillOpacity: 0 },
+        'cemetery':       { color: '#666', weight: 1, fillColor: '#bbb', fillOpacity: 0.6 },
+        'mara-building':  { color: '#555', weight: 0.6, fillColor: '#777', fillOpacity: 0.8 },
+        'mara-yard':      { color: '#555', weight: 0.6, fillColor: '#999', fillOpacity: 0.4 }
+      })[p.part] || { color: c, weight: 0.8, fillColor: c, fillOpacity: 0.5 };
+    },
+    popup: p => `
+      <div class="pop-title">${esc(DC_PARTS[p.part] || p.part)}</div>
+      <div class="pop-row"><span>Project</span><span>${esc(/^mara/.test(p.part) ? 'Existing MARA bitcoin mine, beside ' + p.project : p.project)}</span></div>
+      <div class="pop-note">From the developer's concept plan filed with Hood County, as mapped by the Texas Tribune. Plans can change.</div>
+      <div class="pop-links">${dl(TRIBUNE_STORY, 'The Texas Tribune story →')}</div>`,
+    legendTitle: 'Concept plans (zoom in)',
+    legendRows: [
+      { swatch: 'fill', color: '#177B9E', fill: '#177B9E', text: 'Data center building' },
+      { swatch: 'fill', color: '#177B9E', fill: '#177B9Ea6', text: 'Equipment yard or support building' },
+      { swatch: 'dashfill', color: '#177B9E', fill: '#177B9E26', text: 'Utility area' },
+      { swatch: 'fill', color: '#2f6db5', fill: '#8fb8e0', text: 'Water (ponds, tanks)' },
+      { swatch: 'fill', color: '#555', fill: '#777', text: 'Existing MARA bitcoin mine' }
+    ],
+    rowSwatch: { swatch: 'fill', color: '#177B9E', fill: '#177B9E' },
+    meta: {
+      source: { text: 'The Texas Tribune, Hood County data center map (concept plans)', url: TRIBUNE_STORY },
+      rows: [
+        ['Shows', 'Buildings, equipment yards, utility areas and water features from the concept plans the developers filed with Hood County, in each project’s colour'],
+        ['When', 'Drawn at zoom 13 and closer, like the Tribune’s map'],
+        ['Not shown', 'Project Patriot filed no concept plan']
+      ]
+    }
+  },
+
   {
     id: 'datacenters',
     group: 'Data centers',
@@ -1221,8 +1296,11 @@ const LAYERS = [
     popup: p => `
       <div class="pop-title">${esc(p.name || 'Proposed data center')}</div>
       ${p.developer ? `<div class="pop-row"><span>Developer</span><span>${esc(p.developer)}</span></div>` : ''}
-      ${p.acres != null ? `<div class="pop-row"><span>Footprint</span><span>${Number(p.acres).toLocaleString()} ac</span></div>` : ''}
-      ${p.acres_in_watershed != null ? `<div class="pop-row"><span>Inside the Paluxy watershed</span><span>${Number(p.acres_in_watershed).toLocaleString()} ac</span></div>` : ''}
+      ${p.acreage_tribune != null ? `<div class="pop-row"><span>Acreage</span><span>${Number(p.acreage_tribune).toLocaleString()} ac</span></div>` : (p.acres != null ? `<div class="pop-row"><span>Footprint</span><span>${Number(p.acres).toLocaleString()} ac</span></div>` : '')}
+      ${p.acres_in_watershed != null && p.acres ? (s => `<div class="pop-row"><span>Inside the Paluxy watershed</span><span>${s >= 0.995 ? 'All of it' : s <= 0.005 ? 'None' : 'About ' + Math.round(s * 100) + '%'}</span></div>`)(p.acres_in_watershed / p.acres) : ''}
+      ${p.power || p.power_source ? `<div class="pop-note"><b>Power:</b> ${esc([p.power, p.power_source].filter(x => x && x !== 'Unknown').join('. ') || 'Unknown')}</div>` : ''}
+      ${p.water_use || p.water_source ? `<div class="pop-note"><b>Water:</b> ${esc([p.water_use, p.water_source].filter(x => x && x !== 'Unknown').join('. ') || 'Unknown')}</div>` : ''}
+      ${p.note ? `<div class="pop-note">${esc(p.note)}</div>` : ''}
       <div class="pop-row"><span>Source</span><span>The Texas Tribune</span></div>
       <div class="pop-links">${dl(TRIBUNE_STORY, 'The 8 data centers that could transform one Texas county →')}</div>`,
     rowSwatch: { swatch: 'ramp', colors: Object.values(DC_COLORS) },
@@ -1232,7 +1310,7 @@ const LAYERS = [
       source: { text: 'The Texas Tribune, “The 8 data centers that could transform one Texas county” (2 June 2026)', url: TRIBUNE_STORY },
       rows: [
         ['Projects', 'All eight in the story, as the Tribune drew them for its Hood County map: Comanche Circle, Patriot, Spectrum, Fort Spunky, Red, Yellow, Panther and Lion. Four of them (Comanche Circle, Spectrum, Panther, Lion) sit inside the watershed, and part of Yellow'],
-        ['Attributes', 'Project name, developer where the Tribune names one, and acreage'],
+        ['Attributes', 'Project name, and the Tribune\u2019s developer, acreage, power and water for each'],
         ['Colours', 'Each project in the colour the Tribune\u2019s map uses for it'],
         ['Feeds', 'The data center acreage in “Now vs. with data centers” (the part inside the watershed)']
       ]
@@ -1848,7 +1926,8 @@ function ensureLayer(cfg) {
     let data = await fetchSaved(cfg.file), from = 'saved copy';
     if (data) {
       await wsReady;
-      if (cfg.type === 'points') data = FC(data.features.filter(f => f.geometry?.type !== 'Point' || nearWS(f.geometry.coordinates)));
+      if (cfg.noClip) { /* drawn whole, wherever it lies */ }
+      else if (cfg.type === 'points') data = FC(data.features.filter(f => f.geometry?.type !== 'Point' || nearWS(f.geometry.coordinates)));
       else if (cfg.type === 'line') data = FC(data.features.flatMap(clipLine));
       else if (cfg.id !== 'watershed' && cfg.id !== 'huc12' && !cfg.noClip) data = FC(data.features.filter(f => { try { return turf.booleanIntersects(f, WS_POINTS); } catch (e) { return true; } }));
     } else if (cfg.load) {
@@ -2099,7 +2178,7 @@ function toggleLayer(id) {
     updateLegend();
     return;
   }
-  if (layerObjects[id]) { map.addLayer(layerObjects[id]); restack(); updateLegend(); return; }
+  if (layerObjects[id]) { if (zoomOK(cfg)) map.addLayer(layerObjects[id]); restack(); updateLegend(); return; }
   if (layerBusy[id]) return;
   showLayer(cfg);
 }
@@ -2114,7 +2193,7 @@ function showLayer(cfg) {
       layerBusy[id] = false;
       if (row) row.classList.remove('loading');
       if (!lyr || !layerState[id]) return;
-      map.addLayer(lyr);
+      if (zoomOK(cfg)) map.addLayer(lyr);
       restack();
       updateLegend();
     })
@@ -2135,6 +2214,17 @@ function restack() {
     if (!layerState[c.id] || !l || c.type === 'wms') return;
     if (l.bringToFront) l.bringToFront();
     else if (l.eachLayer) l.eachLayer(x => x.bringToFront && x.bringToFront());
+  });
+}
+
+// ── Zoom-dependent layers (minZoom): drawn only when zoomed in that far ──
+function zoomOK(cfg) { return !cfg.minZoom || map.getZoom() >= cfg.minZoom; }
+function applyMinZoom() {
+  LAYERS.filter(c => c.minZoom).forEach(c => {
+    const l = layerObjects[c.id]; if (!l) return;
+    const want = layerState[c.id] && zoomOK(c);
+    if (want && !map.hasLayer(l)) { map.addLayer(l); restack(); }
+    else if (!want && map.hasLayer(l)) map.removeLayer(l);
   });
 }
 
@@ -2285,6 +2375,7 @@ function exportPNG() {
 buildSidebar();
 tileLayers.light.addTo(map);
 map.on('click', () => map.closePopup());
+map.on('zoomend', applyMinZoom);
 
 wsReady.then(() => {
   // Draw the boundary, fit to it, and lift the loading screen; the other
