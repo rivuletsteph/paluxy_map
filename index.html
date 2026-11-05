@@ -1382,7 +1382,8 @@ const LAYERS = [
     meta: {
       source: { text: 'USGS National Hydrography Dataset (NHD)', url: 'https://www.usgs.gov/national-hydrography/national-hydrography-dataset' },
       rows: [
-        ['Service', 'hydro.nationalmap.gov · nhd/MapServer, Flowline — Large Scale'],
+        ['Saved copy', 'geojsons/NHD_Flowlines_Named.geojson, 5 Nov 2026, from EPA\u2019s NHDPlus V2 service (medium resolution): the USGS NHD service was not answering flowline queries that day'],
+        ['Live fallback', 'hydro.nationalmap.gov · nhd/MapServer, Flowline — Large Scale (high resolution); delete the saved copy to use it, or re-save from it with the button below'],
         ['Processing', 'Named flowlines only · cut at the watershed boundary (9 Oct session)'],
         ['Note', 'NHD was retired 1 Oct 2023 — still published, no longer maintained']
       ]
@@ -1483,6 +1484,7 @@ const LAYERS = [
       source: { text: 'USGS Watershed Boundary Dataset', url: 'https://www.usgs.gov/national-hydrography/watershed-boundary-dataset' },
       rows: [
         ['Geometry', 'HUC-10 1206020201, dissolved'],
+        ['Saved copy', 'geojsons/Paluxy_Watershed.geojson and Paluxy_HUC12s.geojson (5 Nov 2026), so the map opens without waiting on the WBD service'],
         ['Used for', 'Every other layer is clipped to this boundary']
       ]
     }
