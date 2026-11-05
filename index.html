@@ -1133,6 +1133,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
       <div class="footer-text">
         Data Centers &amp; Your Water — Paluxy River<br>
         Draft 2 · updated 23 Oct 2026 · data load live from each agency<br>
+        Data center footprints: <a href="https://www.texastribune.org/2026/06/02/texas-data-centers-hood-county-local-control-rural-water-power/" target="_blank" rel="noopener">The Texas Tribune</a><br>
         🤖 Created with <a href="https://claude.ai" target="_blank" rel="noopener">Claude</a>
       </div>
     </div>
@@ -1176,6 +1177,8 @@ const WQ_LINKS = [
   ['Clean Rivers Program data (TCEQ)', 'https://www.tceq.texas.gov/waterquality/clean-rivers/data/crp-resources.html'],
   ['Brazos River Authority CRP reports', 'https://brazos.org/About-Us/Environmental/Texas-Clean-Rivers-Program/Program-Documents']
 ];
+// Data center footprints: credit the Tribune and link the story on every use.
+const TRIBUNE_STORY = 'https://www.texastribune.org/2026/06/02/texas-data-centers-hood-county-local-control-rural-water-power/';
 const wqLinksHTML = () => WQ_LINKS.map(([t, u]) => `<a href="${u}" target="_blank" rel="noopener">${t} →</a>`).join('');
 const dl = (url, text) => `<a href="${url}" target="_blank" rel="noopener">${text}</a>`;
 
@@ -1196,18 +1199,24 @@ const LAYERS = [
     group: 'Data centers',
     file: 'data_centers.geojson',
     name: 'Data center footprints',
-    desc: n => `${n} footprint${n === 1 ? '' : 's'} · Texas Tribune`,
-    pendingDesc: 'Pending — waiting on footprints from Alex Ford',
+    desc: n => `${n} proposed project${n === 1 ? '' : 's'} · The Texas Tribune`,
+    pendingDesc: 'Pending — geojsons/data_centers.geojson not found',
     type: 'polygon',
     on: true,
     style: { color: '#6a1b9a', weight: 1.8, fillColor: '#8e44ad', fillOpacity: 0.40 },
-    popup: p => genericPopup(p, p.name || p.NAME || 'Data center'),
-    legend: { swatch: 'fill', color: '#6a1b9a', fill: 'rgba(142,68,173,0.40)', text: 'Data center footprint' },
+    popup: p => `
+      <div class="pop-title">${esc(p.name || 'Proposed data center')}</div>
+      ${p.acres != null ? `<div class="pop-row"><span>Footprint</span><span>${Number(p.acres).toLocaleString()} ac</span></div>` : ''}
+      ${p.acres_in_watershed != null ? `<div class="pop-row"><span>Inside the Paluxy watershed</span><span>${Number(p.acres_in_watershed).toLocaleString()} ac</span></div>` : ''}
+      <div class="pop-row"><span>Source</span><span>The Texas Tribune</span></div>
+      <div class="pop-links">${dl(TRIBUNE_STORY, 'The 8 data centers that could transform one Texas county →')}</div>`,
+    legend: { swatch: 'fill', color: '#6a1b9a', fill: 'rgba(142,68,173,0.40)', text: 'Data center footprint (proposed)' },
     meta: {
-      source: { text: 'Alex Ford, The Texas Tribune (credit on use)', url: 'https://www.texastribune.org/' },
+      source: { text: 'The Texas Tribune, “The 8 data centers that could transform one Texas county” (2 June 2026)', url: TRIBUNE_STORY },
       rows: [
-        ['Status', 'Pending — save the file as geojsons/data_centers.geojson in the repo'],
-        ['Feeds', 'The data center acreage in “Now vs. with data centers”']
+        ['Projects', 'Lion, Panther, Patriot, Red, Spectrum and Yellow, the footprints the Tribune drew for its Hood County map'],
+        ['Attributes', 'Project name and acreage only'],
+        ['Feeds', 'The data center acreage in “Now vs. with data centers” (the part inside the watershed)']
       ]
     }
   },
@@ -2141,7 +2150,11 @@ async function loadBaseline() {
 }
 function feedScenarioAcres(data) {
   try {
-    const ac = turf.area(data) / 4046.8564;
+    // Only the acreage inside the watershed counts toward the scenario.
+    const ac = data.features.reduce((s, f) => {
+      if (f.properties && f.properties.acres_in_watershed != null) return s + f.properties.acres_in_watershed;
+      try { const i = turf.intersect(f, WS); return s + (i ? turf.area(i) / 4046.8564 : 0); } catch (e) { return s; }
+    }, 0);
     if (ac > 0) { document.getElementById('scnAcres').value = Math.round(ac); drawScenario(); }
   } catch (e) {}
 }
