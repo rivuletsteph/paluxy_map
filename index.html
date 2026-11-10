@@ -980,6 +980,14 @@ svg.leaflet-image-layer.leaflet-interactive path {
   .scn-table td:first-child, .scn-table th:first-child { text-align: left; color: var(--text-secondary); }
   .scn-table th { color: var(--text-hint); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
   .scn-note { font-size: 11px; color: var(--text-hint); line-height: 1.5; margin-top: 9px; }
+  .bar-body { font-size: 12px; line-height: 1.55; color: var(--text-secondary); }
+  .bar-body p { margin: 0 0 8px; }
+  .bar-body p:last-child { margin-bottom: 0; }
+  .bar-body b { color: var(--text-primary); font-weight: 600; }
+  .bar-check {
+    border-left: 2px solid var(--accent-teal); padding: 7px 0 7px 9px;
+    font-size: 11.5px; color: var(--text-hint); background: rgba(29,158,117,0.05);
+  }
   .scn-note a { color: var(--accent-teal); }
 
   /* ── Footer ── */
@@ -1120,6 +1128,16 @@ svg.leaflet-image-layer.leaflet-interactive path {
     <div class="sidebar-section">
       <div class="sidebar-label">Test your water</div>
       <div class="scn-note" style="margin-top:0;font-size:12px;color:var(--text-secondary);">On a private well? TIAER's lab tests drinking water for coliform bacteria and <i>E. coli</i>. Its guidance walks through collecting a sample and getting it to the lab: <a href="https://www.tarleton.edu/tiaer/drinking-water-bacteria-testing/" target="_blank" rel="noopener">Drinking water bacteria testing (TIAER) →</a></div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Why the Paluxy carries a higher bar</div>
+      <div class="bar-body">
+        <p>Texas does not hold every stream to the same standard. Under the <a href="https://www.tceq.texas.gov/waterquality/standards" target="_blank" rel="noopener">Texas Surface Water Quality Standards</a> (30&nbsp;TAC&nbsp;§307) every classified segment is assigned an <b>aquatic life use</b> — minimal, limited, intermediate, high, exceptional, or oyster waters — and its dissolved&nbsp;oxygen criterion follows from that assignment. The higher the use, the higher the bar a discharge has to clear.</p>
+        <p>The Paluxy River and North Paluxy River are <b>Segment&nbsp;1229</b> of the Brazos River Basin.</p>
+        <p>Then <b>antidegradation</b> sits on top. Where a water is already better than its standards require, Tier&nbsp;2 says that quality has to be kept: a new or increased discharge may not lower it by more than a negligible amount, and may not lower it at all unless the lowering is shown to be necessary. A river in good condition brings that rule with it — which is the point of knowing, and recording, what condition the Paluxy is in now.</p>
+        <p class="bar-check"><b>To confirm before this goes out:</b> Segment&nbsp;1229's designated uses. A TCEQ permit record lists them as high aquatic life use, public water supply and primary contact recreation, but that document is a few years old and has not been checked against the current Appendix&nbsp;A of §307.10, which is where the uses and the dissolved&nbsp;oxygen number are actually set. Worth reading alongside it: Segment&nbsp;1229 was added to the state's 303(d) list in 2008 for sulfate, total dissolved solids and chloride.</p>
+      </div>
     </div>
 
     <div class="sidebar-section">
