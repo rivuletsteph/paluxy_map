@@ -1127,9 +1127,10 @@ svg.leaflet-image-layer.leaflet-interactive path {
       <div class="scn-in">
         <label for="scnAcres">Data center area (acres)</label><input id="scnAcres" type="number" min="0" step="10" value="250">
         <label for="scnP">Annual rainfall (inches)</label><input id="scnP" type="number" min="0" step="1" value="34">
+        <label for="scnImp">Share built over (%)</label><input id="scnImp" type="number" min="0" max="100" step="5" value="100">
       </div>
       <div id="scnOut"><span style="font-size:11.5px;color:var(--text-hint);">Loading the gauge record…</span></div>
-      <div class="scn-note">Screening estimate, not a SWAT run. Assumes new roofs and pavement shed 90% of rain as surface runoff and no longer recharge groundwater. To be replaced by <a href="https://dev.hawqs.tamu.edu/" target="_blank" rel="noopener">HAWQS</a> (SWAT) results; see also <a href="https://modelmywatershed.org/" target="_blank" rel="noopener">Model My Watershed</a>.</div>
+      <div class="scn-note">Screening estimate, not a SWAT run. Assumes new roofs and pavement shed 90% of rain as surface runoff and no longer recharge groundwater. <b>Share built over</b> starts at 100% — the upper bound, since the acreage shown is the whole project footprint, yards and utility areas included. Lower it for a realistic build-out. To be replaced by <a href="https://dev.hawqs.tamu.edu/" target="_blank" rel="noopener">HAWQS</a> (SWAT) results; see also <a href="https://modelmywatershed.org/" target="_blank" rel="noopener">Model My Watershed</a>.</div>
     </div>
 
     <div class="sidebar-footer">
@@ -2280,7 +2281,16 @@ async function loadBaseline() {
   const fc = await loadGauges();
   const act = fc.features.filter(f => f.properties.STATUS === 'Active');
   if (!act.length) throw new Error('no active gauge in the watershed');
-  const g = act.sort((a, b) => b.geometry.coordinates[0] - a.geometry.coordinates[0])[0].properties;   // easternmost = downstream
+  // The outlet gauge for THIS watershed — not simply the easternmost one.
+  // The Brazos gauge at Glen Rose sits inside the bounding box and lies further
+  // east than the Paluxy's own gauge, but it drains 25,818 sq mi of a different
+  // river; using it would measure the Brazos and call it the Paluxy. So drop any
+  // gauge draining far more than this watershed, then take the largest of what
+  // is left — the furthest downstream gauge on the Paluxy itself.
+  const wsSqMi = WS.properties.ACRES / 640;
+  const ours = act.filter(f => !f.properties.DRAIN_SQMI || f.properties.DRAIN_SQMI <= wsSqMi * 3);
+  const g = (ours.length ? ours : act)
+    .sort((a, b) => (b.properties.DRAIN_SQMI || 0) - (a.properties.DRAIN_SQMI || 0))[0].properties;
   const start = `${new Date().getFullYear() - 10}-01-01`;
   const j = await getJSON(`https://waterservices.usgs.gov/nwis/dv/?format=json&sites=${g.SITE_NO}&parameterCd=00060&statCd=00003&startDT=${start}`);
   const q = (j.value.timeSeries?.[0]?.values?.[0]?.value || []).map(x => +x.value).filter(x => x >= 0);
@@ -2308,7 +2318,12 @@ function drawScenario() {
   const A = WS.properties.ACRES;
   const acres = Math.max(0, +document.getElementById('scnAcres').value || 0);
   const P = Math.max(0, +document.getElementById('scnP').value || 0);
-  const f = Math.min(acres / A, 1), b = SC.base, C = 0.9;
+  // Only the share of the footprint actually built over turns into
+  // roofs and pavement. The concept-plan acreage is the whole site —
+  // buildings, yards, utility areas — so 100% is the upper bound, not
+  // the expected case.
+  const imp = Math.min(Math.max(+document.getElementById('scnImp').value || 0, 0), 100) / 100;
+  const f = Math.min(acres / A, 1) * imp, b = SC.base, C = 0.9;
   const now = { surf: b.surf, sub: b.sub }, dc = { surf: (1 - f) * b.surf + f * C * P, sub: (1 - f) * b.sub };
   now.total = now.surf + now.sub; dc.total = dc.surf + dc.sub;
   const af = x => x / 12 * A;
@@ -2332,7 +2347,7 @@ function drawScenario() {
       <tr><td>Subsurface flow</td><td class="mono">${pct('sub')}</td></tr></table>
     <div class="scn-note">Baseline: ${esc(b.gauge.NAME)} (USGS ${esc(b.gauge.SITE_NO)}), ${b.years} years of daily flow.</div>`;
 }
-document.querySelectorAll('#scnAcres, #scnP').forEach(i => i.addEventListener('input', drawScenario));
+document.querySelectorAll('#scnAcres, #scnP, #scnImp').forEach(i => i.addEventListener('input', drawScenario));
 
 // ── PNG export ──
 const EXPORT_W = 1000, EXPORT_H = 800;
