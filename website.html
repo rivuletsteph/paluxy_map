@@ -9,10 +9,14 @@
   The landowner-facing page. The map lives in index.html and is embedded here
   as an inset; this page carries the reading.
 
-  The three constants below are copied from the saved data rather than fetched,
-  so the page still works opened straight from a Downloads folder. Each one
-  says where it came from. The only thing fetched live is the gauge record,
-  which needs the internet anyway.
+  Structure follows the August 2026 draft (website.html in paluxy_watershed):
+  two questions, the watershed, water quality today, how water moves and where
+  development fits, three steps, who to contact. What were dashed placeholders
+  in that draft are filled here with the monitoring data the map now carries.
+
+  The constants below are copied from the saved data rather than fetched, so
+  the page still works opened straight from a Downloads folder. The only thing
+  fetched live is the gauge record, which needs the internet anyway.
 -->
 <style>
   :root {
@@ -23,7 +27,6 @@
     --text-secondary: #55524b;
     --text-hint: #8a877f;
     --accent-teal: #1D9E75;
-    --accent-teal-light: #E1F5EE;
     --rule: #d8d4cb;
   }
   * { box-sizing: border-box; }
@@ -45,18 +48,30 @@
   h1 { font-size: clamp(27px, 5.4vw, 38px); line-height: 1.15; margin: 0; letter-spacing: -0.015em; }
   .sub { color: var(--text-secondary); font-size: 16px; margin: 10px 0 0; }
 
+  /* Section label over headline — the two-tier heading from the August draft. */
   h2 {
     font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em;
     color: var(--text-hint); margin: 46px 0 14px;
     padding-bottom: 8px; border-bottom: 1px solid var(--rule);
   }
+  h3 { font-size: 21px; line-height: 1.28; margin: 0 0 10px; letter-spacing: -0.012em; }
+  h4 { font-size: 16px; margin: 26px 0 8px; }
+  .lead { color: var(--text-secondary); font-size: 16.5px; margin: 0 0 16px; }
   p { margin: 0 0 14px; }
-  p:last-child { margin-bottom: 0; }
   a { color: #15806a; }
   b, strong { font-weight: 600; color: var(--text-primary); }
 
-  /* ── map inset ── */
-  .inset { margin: 10px 0 0; }
+  .qa { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .qcard { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 16px 16px 14px; }
+  .qcard .q { font-weight: 600; margin-bottom: 7px; }
+  .qcard p { font-size: 15px; color: var(--text-secondary); margin: 0; }
+
+  .facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0 0; }
+  .fact { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 12px 13px; }
+  .fact .n { font-size: 20px; display: block; }
+  .fact .l { font-size: 12.5px; color: var(--text-hint); line-height: 1.45; display: block; margin-top: 4px; }
+
+  .inset { margin: 16px 0 0; }
   .inset-frame {
     position: relative; border: 1px solid var(--border); border-radius: 6px;
     overflow: hidden; background: var(--panel); box-shadow: 0 2px 12px rgba(0,0,0,0.07);
@@ -68,7 +83,10 @@
   }
   .inset-cap a { font-weight: 500; }
 
-  /* ── the estimate ── */
+  .diagram { margin-top: 8px; border-radius: 6px; overflow: hidden; }
+  .diagram svg { display: block; width: 100%; }
+  .cap { font-size: 12.5px; color: var(--text-hint); text-align: center; margin-top: 8px; }
+
   .card {
     background: var(--panel); border: 1px solid var(--border); border-radius: 6px;
     padding: 18px 18px 16px; margin-top: 6px;
@@ -85,7 +103,7 @@
   table.chg td, table.chg th { padding: 6px 2px; text-align: right; border-top: 1px solid var(--border); font-weight: 400; }
   table.chg td:first-child, table.chg th:first-child { text-align: left; color: var(--text-secondary); }
   table.chg th { color: var(--text-hint); font-size: 11px; letter-spacing: 0.07em; text-transform: uppercase; }
-  .num { font-family: 'DM Mono', ui-monospace, Menlo, monospace; font-variant-numeric: tabular-nums; }
+  .num, .fact .n { font-family: 'DM Mono', ui-monospace, Menlo, monospace; font-variant-numeric: tabular-nums; }
   .ph { display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 3px;
         background: #f6e3c4; color: #6f5312; font-size: 10.5px; letter-spacing: .04em;
         text-transform: uppercase; vertical-align: 1.5px; }
@@ -96,11 +114,34 @@
   details.calc li { margin-bottom: 7px; }
   details.calc code { font-family: 'DM Mono', ui-monospace, monospace; font-size: 12.5px;
                       color: var(--text-primary); background: #edeae3; padding: 1px 5px; border-radius: 3px; }
+
+  .steps { display: grid; gap: 14px; }
+  .step { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 16px 18px 15px; }
+  .step .num-label { font-family: 'DM Mono', ui-monospace, monospace; font-size: 11.5px; letter-spacing: .12em; color: var(--accent-teal); }
+  .step h3 { font-size: 18px; margin: 6px 0 8px; }
+  .step p { font-size: 15px; color: var(--text-secondary); }
+  .step ul { margin: 9px 0 0; padding-left: 19px; font-size: 14.5px; color: var(--text-secondary); }
+  .step li { margin-bottom: 5px; }
+
+  .res { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .rcard { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 13px 14px; }
+  .rcard .role { font-size: 10.5px; text-transform: uppercase; letter-spacing: .09em; color: var(--accent-teal); }
+  .rcard .name { font-weight: 600; margin: 4px 0; }
+  .rcard .desc { font-size: 13.5px; color: var(--text-secondary); line-height: 1.5; }
+
   .fine { font-size: 13px; color: var(--text-hint); line-height: 1.55; margin-top: 12px; }
   .check {
     border-left: 2px solid var(--accent-teal); background: rgba(29,158,117,0.055);
     padding: 11px 0 11px 13px; font-size: 14px; color: var(--text-secondary); margin: 16px 0 0;
   }
+  .later {
+    border: 1.5px dashed var(--border); border-radius: 6px; background: rgba(255,255,255,0.45);
+    padding: 14px 16px; margin-top: 20px;
+  }
+  .later .tag { font-size: 10.5px; text-transform: uppercase; letter-spacing: .1em; color: var(--text-hint); }
+  .later .what { font-weight: 600; margin: 5px 0 4px; }
+  .later p { font-size: 14px; color: var(--text-secondary); margin: 0; }
+
   footer {
     margin-top: 54px; padding-top: 20px; border-top: 1px solid var(--rule);
     font-size: 13px; color: var(--text-hint); line-height: 1.7;
@@ -108,6 +149,7 @@
   @media (max-width: 560px) {
     body { font-size: 16px; }
     .inset-frame iframe { height: 340px; }
+    .qa, .res, .facts { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -122,35 +164,121 @@
   <p class="sub">What is known about water quality and the long-term health of the Paluxy River watershed, and what a wave of proposed data centers would ask of it.</p>
 </header>
 
-<p>Eight data center projects have been proposed in and around Hood County. Four of them sit inside the Paluxy River watershed, along with part of a fifth. This page gathers what is already measured about the river — who samples it, where, and for how long — and sets a first, rough estimate of what paving over part of the watershed would do to the water that reaches it.</p>
+<h2>Start here</h2>
 
-<p>It is a starting point for weighing the trade-offs, not a verdict on them.</p>
+<h3>Two questions, answered plainly</h3>
+<p class="lead">Most people arrive with the same two questions. Here is the short version — the rest of the page goes deeper.</p>
+
+<div class="qa">
+  <div class="qcard">
+    <div class="q">What's a watershed?</div>
+    <p>All the land that drains to a common waterway. Rain falling across this area works its way — over the surface and underground — into the Paluxy River. What happens on the land upstream can reach the water everyone downstream depends on.</p>
+  </div>
+  <div class="qcard">
+    <div class="q">How does this affect me?</div>
+    <p>A large data center takes land and water, and changes how water moves across a site. The thing to watch is not one dramatic event. It is the <strong>long-term quality and health</strong> of the water in your watershed and your well, measured against what it is today.</p>
+  </div>
+</div>
 
 <h2>The watershed</h2>
+
+<h3>The Paluxy River system</h3>
+<p class="lead">The Paluxy drains this corner of north-central Texas before joining the Brazos near Glen Rose. TCEQ <b>Segment&nbsp;1229</b> covers the main stem and the North Paluxy — the reach most directly downstream of the proposed development.</p>
+
+<div class="facts">
+  <div class="fact"><span class="n">511</span><span class="l">square miles — 327,289 acres, the HUC-10 watershed boundary</span></div>
+  <div class="fact"><span class="n">37</span><span class="l">named tributaries in the National Hydrography Dataset</span></div>
+  <div class="fact"><span class="n">4,233</span><span class="l">acres of proposed data center inside the watershed — 1.3% of it</span></div>
+</div>
 
 <div class="inset">
   <div class="inset-frame">
     <iframe src="./index.html?inset=1" title="Interactive map of the Paluxy River watershed" loading="lazy"></iframe>
   </div>
-  <div class="inset-cap">
+  <p class="inset-cap">
     <span>Monitoring stations, wells, springs, dischargers and the proposed data centers.</span>
     <a href="./index.html" target="_blank" rel="noopener">Open the full map →</a>
-  </div>
+  </p>
 </div>
 
-<h2>Why the Paluxy carries a higher bar</h2>
+<p class="fine">Eight data center projects have been proposed in and around Hood County. Four sit inside the watershed — Comanche Circle, Project Spectrum, Project Panther and Project Lion — along with 76 of Project Yellow's 544 acres. The other three fall outside it entirely. Footprints and concept plans come from The Texas Tribune's reporting.</p>
+
+<h2>Water quality today</h2>
+
+<h3>Where the Paluxy stands now</h3>
+<p class="lead">The baseline is the point. Establishing what the river is today is what makes any future change visible — and what an antidegradation review is argued against. This is what is already being measured, by whom, and for how long.</p>
+
+<div class="facts">
+  <div class="fact"><span class="n">28</span><span class="l">TCEQ surface water quality monitoring stations</span></div>
+  <div class="fact"><span class="n">12</span><span class="l">Texas Stream Team volunteer sites — only 2 with results published</span></div>
+  <div class="fact"><span class="n">1</span><span class="l">active USGS gauge on the Paluxy itself — 08091500 at Glen Rose</span></div>
+</div>
+
+<p style="margin-top:16px">Those 28 TCEQ stations are the formal record — the Clean Rivers Program and SWQMIS sampling that TCEQ assesses the segment against. The Stream Team sites are the volunteer network, and they are where the gap is: <b>ten of the twelve have no results in the public Water Quality Portal</b>. Readings may well have been taken there; they would sit in Stream Team's own database rather than the national one. Pulling them across is a job worth doing, because a volunteer record going back years is exactly the kind of evidence a baseline argument runs on.</p>
+
+<h4>What the record already shows</h4>
+
+<p>A first pass through that record is done. <b>Paluxy River — two monitoring stations</b> works through the full SWQMIS export for Segment&nbsp;1229: <b>3,130 results</b> covering <b>13 December 2006 to 4 May 2026</b>, 37 analytes, at the two stations that carry the long record — 20232 at the Glen Rose low water crossing, sampled by the Brazos River Authority, and 20343 at Bakers Crossing, sampled by the TCEQ regional office. Both run roughly quarterly.</p>
+
+<p>It holds sampling effort by year, the four screening indicators plotted against their criteria lines, every parameter with a Kendall trend and a Theil–Sen slope, seasonal medians, and a chart of how much of each series is non-detect. That last one matters: orthophosphate is non-detect in all 83 results at both stations, and ammonia at 20343 in 88% — those series describe the laboratory method, not the river.</p>
+
+<p><a href="https://claude.ai/artifact/BCPMNNG5ACsLghLbyA8vKV" target="_blank" rel="noopener">Read the preliminary water quality analysis →</a></p>
+
+<p class="fine">It is orientation, not an assessment. The <i>E.&nbsp;coli</i> geometric means in it are period-of-record rather than the seven-year window TCEQ assesses against, censored results are plotted at their reporting limit, and the criteria lines are the general ones — the segment-specific values still need checking against Appendix&nbsp;A.</p>
+
+<p>The gauge at Glen Rose has logged daily flow for decades. Everything in the estimate below rests on its record.</p>
+
+<h4>Who is permitted to discharge</h4>
+
+<p>EPA's ECHO database lists <b>122 facilities</b> in the watershed with a discharge permit on file, current or lapsed. <b>65 permits are in effect</b> today, and of those, <b>12 are individual permits</b> — written for one named facility, with limits set for that site. The rest are general permits: a statewide permit covering a category of activity, such as construction stormwater or a concrete batch plant, which a facility joins by filing a notice of intent. The map colours them by type.</p>
+
+<h4>Why the Paluxy carries a higher bar</h4>
 
 <p>Texas does not hold every stream to the same standard. Under the <a href="https://www.tceq.texas.gov/waterquality/standards" target="_blank" rel="noopener">Texas Surface Water Quality Standards</a> (30&nbsp;TAC&nbsp;§307) every classified segment is assigned an <b>aquatic life use</b> — minimal, limited, intermediate, high, exceptional, or oyster waters — and its dissolved oxygen criterion follows from that assignment. The higher the use, the higher the bar a discharge has to clear.</p>
 
-<p>The Paluxy River and North Paluxy River are <b>Segment&nbsp;1229</b> of the Brazos River Basin.</p>
-
 <p>Then <b>antidegradation</b> sits on top of all of it. Where a water is already better than its standards require, Tier&nbsp;2 says that quality has to be kept: a new or increased discharge may not lower it by more than a negligible amount, and may not lower it at all unless the lowering is shown to be necessary. A river in good condition brings that rule with it — which is exactly why it matters to know, and to record, what condition the Paluxy is in now.</p>
 
-<p class="check"><b>To confirm before this goes out:</b> Segment&nbsp;1229's designated uses. A TCEQ permit record lists them as high aquatic life use, public water supply and primary contact recreation, but that document is a few years old and has not been checked against the current Appendix&nbsp;A of §307.10, which is where the uses and the dissolved oxygen number are actually set. Worth reading alongside it: Segment&nbsp;1229 was added to the state's 303(d) list in 2008 for sulfate, total dissolved solids and chloride.</p>
+<p class="check"><b>To confirm before this goes out.</b> Two things, and they may conflict. <b>(1)</b> Segment&nbsp;1229's designated uses: a TCEQ permit record lists them as high aquatic life use, public water supply and primary contact recreation, but that document is a few years old and has not been checked against the current Appendix&nbsp;A of §307.10, where the uses and the dissolved oxygen number are actually set. <b>(2)</b> The segment's assessment status: an earlier draft of this page recorded TCEQ listing 1229 as <i>Fully Supporting</i>, while the 303(d) list added it in 2008 for sulfate, total dissolved solids and chloride. Both can be true — different parameters, different years — but the current Integrated Report is what settles it, and until it is read, neither statement should be quoted.</p>
 
-<h2>Now vs. with data centers</h2>
+<h2>What this means for your water</h2>
 
-<p>Roofs, pavement and equipment pads shed rain instead of soaking it up. More of it runs straight to the river, and less of it soaks in to feed the springs and the base flow that keep the river going between storms. This is a screening estimate of that trade, not a model run — move the inputs and watch which way each number goes.</p>
+<h3>How water moves — and where development fits</h3>
+<p class="lead">A simple picture of the pathways: rainfall, surface runoff, the river, your well, and the aquifer beneath.</p>
+
+<div class="diagram">
+  <svg viewBox="0 0 860 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Cross-section of the watershed showing rainfall, runoff from a data center site, the Paluxy River, a private well and the Trinity Aquifer water table">
+    <rect width="860" height="200" fill="#1C3A4A"/>
+    <defs>
+      <linearGradient id="landgrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3A5A2E"/><stop offset="100%" stop-color="#2B4A20"/></linearGradient>
+      <linearGradient id="watergrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2B6B8A"/><stop offset="100%" stop-color="#1C4A62"/></linearGradient>
+      <marker id="ambarr" markerWidth="6" markerHeight="6" refX="5" refY="2" orient="auto"><path d="M0,0 L6,2 L0,4Z" fill="#E8A85A"/></marker>
+    </defs>
+    <rect x="0" y="120" width="860" height="80" fill="url(#landgrad)"/>
+    <ellipse cx="430" cy="130" rx="260" ry="22" fill="url(#watergrad)"/>
+    <ellipse cx="430" cy="130" rx="240" ry="14" fill="#2B7A9A" opacity="0.5"/>
+    <g fill="#6B9BAF" opacity="0.7"><ellipse cx="80" cy="45" rx="3" ry="7"/><ellipse cx="130" cy="30" rx="3" ry="7"/><ellipse cx="200" cy="50" rx="3" ry="7"/><ellipse cx="650" cy="35" rx="3" ry="7"/><ellipse cx="720" cy="55" rx="3" ry="7"/></g>
+    <path d="M90,110 Q150,115 260,128" stroke="#C07A2A" stroke-width="2" fill="none" stroke-dasharray="5,3" opacity="0.8"/>
+    <line x1="40" y1="165" x2="820" y2="165" stroke="#6B9BAF" stroke-width="1" stroke-dasharray="8,4" opacity="0.5"/>
+    <rect x="690" y="68" width="80" height="52" rx="3" fill="#C07A2A" opacity="0.85"/>
+    <rect x="698" y="76" width="8" height="36" rx="1" fill="rgba(0,0,0,0.3)"/><rect x="710" y="76" width="8" height="36" rx="1" fill="rgba(0,0,0,0.3)"/><rect x="722" y="76" width="8" height="36" rx="1" fill="rgba(0,0,0,0.3)"/><rect x="734" y="76" width="8" height="36" rx="1" fill="rgba(0,0,0,0.3)"/>
+    <ellipse cx="706" cy="65" rx="8" ry="5" fill="rgba(255,255,255,0.15)"/><ellipse cx="722" cy="62" rx="7" ry="4" fill="rgba(255,255,255,0.12)"/>
+    <text x="65" y="22" font-family="DM Sans,system-ui,sans-serif" font-size="9" fill="rgba(255,255,255,0.6)" font-weight="600" letter-spacing="1">RAINFALL</text>
+    <text x="140" y="106" font-family="DM Sans,system-ui,sans-serif" font-size="8.5" fill="#E8A85A" font-weight="600">STORMWATER RUNOFF</text>
+    <text x="370" y="133" font-family="DM Sans,system-ui,sans-serif" font-size="9" fill="rgba(255,255,255,0.7)" font-weight="600" letter-spacing="1">PALUXY RIVER</text>
+    <text x="44" y="162" font-family="DM Sans,system-ui,sans-serif" font-size="8" fill="rgba(107,155,175,0.8)" font-weight="500">— WATER TABLE (TRINITY AQUIFER)</text>
+    <text x="700" y="63" font-family="DM Sans,system-ui,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.6)" font-weight="500">DATA CENTER</text>
+    <rect x="100" y="140" width="14" height="30" rx="2" fill="rgba(107,155,175,0.4)" stroke="rgba(107,155,175,0.7)" stroke-width="1"/>
+    <text x="90" y="186" font-family="DM Sans,system-ui,sans-serif" font-size="8" fill="rgba(107,155,175,0.8)" font-weight="500">YOUR WELL</text>
+    <path d="M700,120 Q660,124 590,129" stroke="#E8A85A" stroke-width="1.5" fill="none" marker-end="url(#ambarr)"/>
+    <rect x="690" y="120" width="80" height="14" fill="rgba(192,122,42,0.3)"/>
+    <text x="692" y="145" font-family="DM Sans,system-ui,sans-serif" font-size="7" fill="rgba(192,122,42,0.8)" font-weight="600">IMPERVIOUS COVER</text>
+  </svg>
+  <p class="cap">Conceptual diagram — water pathways in the watershed, and where development meets them.</p>
+</div>
+
+<h4>What paving part of it would do</h4>
+
+<p>Roofs, pavement and equipment pads shed rain instead of soaking it up. More of it runs straight to the river, and less soaks in to feed the springs and the base flow that keep the river going between storms. This is a screening estimate of that trade — move the inputs and watch which way each number goes.</p>
 
 <div class="card">
   <div class="ins">
@@ -171,7 +299,7 @@
 
 <p class="fine"><b>What replaces this estimate.</b> First, <a href="https://modelmywatershed.org/" target="_blank" rel="noopener">Model My Watershed</a> — a real land-cover water balance for the watershed, rather than one runoff coefficient applied to a single block of acres. After that, SWAT modelling of the Paluxy itself through <a href="https://dev.hawqs.tamu.edu/" target="_blank" rel="noopener">HAWQS</a>, which is the work this project is building toward.</p>
 
-<h3>What this has to do with water quality</h3>
+<h4>What this has to do with water quality</h4>
 
 <p>The estimate above counts water, not pollutants. It belongs here because the two are the same question asked twice.</p>
 
@@ -179,16 +307,89 @@
 
 <p>The other half matters more, and it is the quieter one. Rain that no longer soaks in is rain that no longer feeds the springs and the base flow. Base flow is what dilutes a discharge and what holds dissolved oxygen up through a Texas summer — and the dissolved oxygen criterion a segment carries is the one that has to hold when flow is at its lowest, which is precisely when there is least water to do the work. Less base flow means the same discharge lands in less water.</p>
 
-<p>Segment&nbsp;1229 is already on the state's 303(d) list for sulfate, total dissolved solids and chloride — constituents that concentrate as flow drops. And Tier&nbsp;2 antidegradation asks a narrow question: will existing quality be lowered by more than a negligible amount? The paths above are how it could be, without a single new permitted outfall.</p>
+<p>Segment&nbsp;1229's 303(d) listing is for sulfate, total dissolved solids and chloride — constituents that concentrate as flow drops. And Tier&nbsp;2 antidegradation asks a narrow question: will existing quality be lowered by more than a negligible amount? The paths above are how it could be, without a single new permitted outfall.</p>
 
-<h2>Test your water</h2>
+<p class="fine">This page does not yet address how much water the projects would <i>use</i>. The Tribune's reporting carries per-project figures — Comanche Circle alone lists a one-time flush and fill of 95 million gallons, then 150,000 gallons a day, drawn from on-site groundwater wells. Pumping is a separate question from runoff, and it is not in the estimate above.</p>
 
-<p>On a private well? TIAER's lab tests drinking water for coliform bacteria and <i>E. coli</i>. Its guidance walks through collecting a sample and getting it to the lab: <a href="https://www.tarleton.edu/tiaer/drinking-water-bacteria-testing/" target="_blank" rel="noopener">Drinking water bacteria testing →</a></p>
+<div class="later">
+  <span class="tag">Not built yet</span>
+  <p class="what">Aquifer cross-section — the side view</p>
+  <p>A cut-away showing where a project sits, where it would withdraw water, and how nearby wells could be affected. It is the picture people most want, and the one that needs the groundwater work done first.</p>
+</div>
 
-<p>If you have a well, its record may already be on the map. The wells layer comes from the TWDB Groundwater Database — depth, aquifer, year drilled, and whether water levels or water quality have been recorded there.</p>
+<h2>Take action</h2>
+
+<h3>Three practical steps for landowners</h3>
+<p class="lead">Protecting water quality starts with documentation — from establishing your own baseline to engaging the public process.</p>
+
+<div class="steps">
+  <div class="step">
+    <span class="num-label">01</span>
+    <h3>Document your baseline</h3>
+    <p>Before construction begins is the best time to test your water, surface and groundwater both. A documented pre-development record is the most durable reference point you can hold.</p>
+    <p style="margin-top:10px">TIAER's lab tests drinking water for coliform bacteria and <i>E.&nbsp;coli</i>, and its guidance walks through collecting a sample and getting it to the lab: <a href="https://www.tarleton.edu/tiaer/drinking-water-bacteria-testing/" target="_blank" rel="noopener">Drinking water bacteria testing →</a></p>
+    <ul>
+      <li>Register your well with the Upper Trinity Groundwater Conservation District</li>
+      <li>Ask what testing is available, and at what cost</li>
+      <li>Your well may already be on the map — the wells layer comes from the TWDB Groundwater Database, with depth, aquifer, year drilled, and whether levels or quality have ever been recorded there</li>
+      <li>Note USGS gauge 08091500 at Glen Rose for flow comparison</li>
+    </ul>
+  </div>
+  <div class="step">
+    <span class="num-label">02</span>
+    <h3>Track the permit process</h3>
+    <p>A discharge to the Paluxy requires a TCEQ permit. Where a water is better than its standards require, a Tier&nbsp;2 antidegradation review applies — and that review is a public document.</p>
+    <ul>
+      <li>Watch TCEQ permit notices for this watershed</li>
+      <li>Read the antidegradation analysis when one is filed</li>
+      <li>Note the public comment period dates — they are short</li>
+      <li>Check whether it is an individual or a general permit; only the individual one carries limits written for that site</li>
+    </ul>
+    <p style="margin-top:10px"><a href="https://www.tceq.texas.gov/permitting" target="_blank" rel="noopener">TCEQ permitting →</a></p>
+  </div>
+  <div class="step">
+    <span class="num-label">03</span>
+    <h3>Engage the process</h3>
+    <p>The Texas system includes formal ways for affected landowners to take part. Written comments become part of the official record.</p>
+    <ul>
+      <li>Submit written comment during the comment period</li>
+      <li>Say what you have measured, and when — a dated record carries further than a concern</li>
+      <li>Connect with local watershed organisations</li>
+    </ul>
+  </div>
+</div>
+
+<h2>Who to contact</h2>
+
+<p class="lead">Listed for information, not as endorsements.</p>
+
+<div class="res">
+  <div class="rcard">
+    <div class="role">Groundwater &amp; well registration</div>
+    <div class="name">Upper Trinity Groundwater Conservation District</div>
+    <div class="desc">Well registration, aquifer monitoring and local groundwater management for this area.</div>
+  </div>
+  <div class="rcard">
+    <div class="role">Permitting</div>
+    <div class="name">TCEQ</div>
+    <div class="desc">Permit notices, the antidegradation review, and the public comment process.</div>
+  </div>
+  <div class="rcard">
+    <div class="role">Flow record</div>
+    <div class="name">USGS gauge 08091500</div>
+    <div class="desc">Paluxy River at Glen Rose — the long-term daily flow record this page's estimate rests on.</div>
+  </div>
+  <div class="rcard">
+    <div class="role">Volunteer monitoring</div>
+    <div class="name">Texas Stream Team</div>
+    <div class="desc">The volunteer network behind twelve sites in this watershed. Training and equipment for taking your own readings.</div>
+  </div>
+</div>
+
+<p class="check"><b>Still to verify before this list goes out.</b> The August draft also carried Collier Consulting (independent hydrogeology), Protect the Paluxy Valley, the Brazos Watershed Alliance and a Bosque County outreach collaborator, plus an unfilled slot for local legal guidance on Subchapter&nbsp;K and contested-case procedure. Those are held back here until contacts and links are confirmed — a resources list is only as good as its worst entry.</p>
 
 <footer>
-  Data Centers &amp; Your Water — Paluxy River · Draft 3 · 9 November 2026<br>
+  Data Centers &amp; Your Water — Paluxy River · Draft 4 · 10 November 2026<br>
   Data center footprints and concept plans: <a href="https://www.texastribune.org/2026/06/02/texas-data-centers-hood-county-local-control-rural-water-power/" target="_blank" rel="noopener">The Texas Tribune</a><br>
   Monitoring data: TCEQ, Texas Stream Team, USGS, TWDB and EPA ECHO, via each agency's own service.<br>
   🤖 Created with <a href="https://claude.ai" target="_blank" rel="noopener">Claude</a>
@@ -200,10 +401,12 @@
 /* ───────────────────────────────────────────────────────────────────
    Runoff screening estimate.
 
-   Three constants are copied from the saved data so the page works from
-   a download; only the gauge record is fetched.
+   Two constants are copied from the saved data so the page works opened
+   straight from a folder, with no server and no data directory beside it.
+   The gauge record is the one thing fetched live.
    ─────────────────────────────────────────────────────────────────── */
-const WS_ACRES  = 327288.9;            // geojsons/Paluxy_Watershed.geojson, ACRES (HUC-10 1206020201)
+
+const WS_ACRES  = 327288.9;             // geojsons/Paluxy_Watershed.geojson, ACRES (HUC-10 1206020201)
 const GAUGE     = { id: '08091500', name: 'Paluxy Rv at Glen Rose, TX', daSqMi: 410 };
                                         // geojsons/USGS_Gauges.geojson — the Paluxy's own outlet gauge.
                                         // NOT the Brazos gauge at Glen Rose, which is further east but
@@ -276,6 +479,7 @@ function draw() {
         <code>${(1 - f).toFixed(4)} × ${base.surf.toFixed(2)} + ${f.toFixed(4)} × ${paved.toFixed(1)}</code>
         = <b>${dc.surf.toFixed(2)} in/yr</b>, which is the <b>${pct('surf')}</b> in the table.
         Base flow drops by the same share. Acre-feet are inches × ${ac} ÷ 12.</li>`;
+
   out.innerHTML = `
     <div class="key"><span><i style="background:#b9b5ab"></i>Now</span><span><i style="background:#1D9E75"></i>With data centers</span><span>acre-feet per year</span></div>
     ${svg}
