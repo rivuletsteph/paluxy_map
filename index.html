@@ -1345,6 +1345,51 @@ const LAYERS = [
   },
 
   {
+    id: 'streamteam',
+    group: 'Monitoring',
+    file: 'StreamTeam_Stations.geojson',
+    name: 'Texas Stream Team sites',
+    desc: (n, d) => {
+      const w = d.features.filter(f => +f.properties.activityCount > 0).length;
+      return `${n} sites · ${w} with results in the Water Quality Portal`;
+    },
+    type: 'points',
+    marker: 'ring',
+    on: true,
+    style: p => +p.activityCount > 0
+      ? { radius: 6, fillColor: '#8E5BD0', color: '#4f2d7f', weight: 1.8, fillOpacity: 0.95 }
+      : { radius: 5, fillColor: '#FFFFFF', color: '#8E5BD0', weight: 1.8, fillOpacity: 0.9 },
+    label: p => String(p.MonitoringLocationIdentifier || '').replace('TXSTRMTM_WQX-', ''),
+    labelColor: '#4f2d7f',
+    popup: p => {
+      const n = +p.activityCount || 0, r = +p.resultCount || 0;
+      return `
+      <div class="pop-title">${esc(p.MonitoringLocationName)} ${n > 0
+        ? '<span class="pop-pill pill-on">' + r + ' results</span>'
+        : '<span class="pop-pill pill-off">No results in WQP</span>'}</div>
+      <div class="pop-row"><span>Site ID</span><span class="mono">${esc(p.MonitoringLocationIdentifier)}</span></div>
+      <div class="pop-row"><span>Collected by</span><span>Texas Stream Team volunteers</span></div>
+      <div class="pop-row"><span>Type</span><span>${esc(p.ResolvedMonitoringLocationTypeName || p.MonitoringLocationTypeName || '')}</span></div>
+      ${p.CountyName ? `<div class="pop-row"><span>County</span><span>${esc(p.CountyName)}</span></div>` : ''}
+      ${n > 0
+        ? `<div class="pop-row"><span>In the portal</span><span>${n} sampling ${n === 1 ? 'visit' : 'visits'}</span></div>`
+        : '<div class="pop-note">This site is on record as a Stream Team location, but no results for it have reached the Water Quality Portal. Its readings, if any, are in Stream Team&rsquo;s own database.</div>'}
+      <div class="pop-links">${p.siteUrl ? dl(p.siteUrl, 'Station page &rarr;') : ''}</div>`;
+    },
+    legend:  { swatch: 'dot', color: '#4f2d7f', fill: '#8E5BD0', text: 'Stream Team site (results in WQP)' },
+    legend2: { swatch: 'dot', color: '#8E5BD0', fill: '#FFFFFF', text: 'Stream Team site (no results in WQP)' },
+    meta: {
+      source: { text: 'Texas Stream Team, via the Water Quality Portal', url: 'https://www.waterqualitydata.us/' },
+      rows: [
+        ['Query', 'organization = TXSTRMTM_WQX, watershed + 1 km'],
+        ['Pulled', '9 November 2026'],
+        ['Gap', 'Only 2 of the 12 sites inside the watershed have results in the portal — Paluxy @ JL&rsquo;s Crossing and Wheeler Branch Reservoir. The readings from the other ten sit in Stream Team&rsquo;s own database. That pull is still to do.'],
+        ['Stream Team', dl('https://www.meadowscenter.txstate.edu/Service/TexasStreamTeam.html', 'Texas Stream Team, The Meadows Center')]
+      ]
+    }
+  },
+
+  {
     id: 'gauges',
     group: 'Monitoring',
     file: 'USGS_Gauges.geojson',
