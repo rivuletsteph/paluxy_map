@@ -86,6 +86,16 @@
   table.chg td:first-child, table.chg th:first-child { text-align: left; color: var(--text-secondary); }
   table.chg th { color: var(--text-hint); font-size: 11px; letter-spacing: 0.07em; text-transform: uppercase; }
   .num { font-family: 'DM Mono', ui-monospace, Menlo, monospace; font-variant-numeric: tabular-nums; }
+  .ph { display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 3px;
+        background: #f6e3c4; color: #6f5312; font-size: 10.5px; letter-spacing: .04em;
+        text-transform: uppercase; vertical-align: 1.5px; }
+  details.calc { margin-top: 16px; border-top: 1px solid var(--rule); padding-top: 12px; }
+  details.calc summary { cursor: pointer; font-size: 13px; color: var(--text-secondary); }
+  details.calc ol { margin: 12px 0 0; padding-left: 20px; font-size: 13px;
+                    color: var(--text-secondary); line-height: 1.75; }
+  details.calc li { margin-bottom: 7px; }
+  details.calc code { font-family: 'DM Mono', ui-monospace, monospace; font-size: 12.5px;
+                      color: var(--text-primary); background: #edeae3; padding: 1px 5px; border-radius: 3px; }
   .fine { font-size: 13px; color: var(--text-hint); line-height: 1.55; margin-top: 12px; }
   .check {
     border-left: 2px solid var(--accent-teal); background: rgba(29,158,117,0.055);
@@ -144,14 +154,32 @@
 
 <div class="card">
   <div class="ins">
-    <label for="acres">Data center area (acres)</label><input id="acres" type="number" min="0" step="10" value="4233">
-    <label for="rain">Annual rainfall (inches)</label><input id="rain" type="number" min="0" step="1" value="34">
+    <label for="acres">Data center area inside the watershed (acres)</label><input id="acres" type="number" min="0" step="10" value="4233">
+    <label for="rain">Annual rainfall (inches)<span class="ph">placeholder</span></label><input id="rain" type="number" min="0" step="1" value="34">
     <label for="imp">Share built over (%)</label><input id="imp" type="number" min="0" max="100" step="5" value="100">
   </div>
   <div id="out"><p class="fine" style="margin-top:16px;">Loading the gauge record…</p></div>
+  <details class="calc">
+    <summary>How this is worked out — it is arithmetic, not a model</summary>
+    <ol id="calcsteps"><li>Waiting on the gauge record…</li></ol>
+  </details>
 </div>
 
-<p class="fine">Assumes new roofs and pavement shed 90% of the rain that falls on them as surface runoff, and no longer recharge groundwater. <b>Share built over</b> starts at 100% — the upper bound, since the acreage is the whole project footprint, yards and utility areas included. Lower it for a realistic build-out. To be replaced by <a href="https://dev.hawqs.tamu.edu/" target="_blank" rel="noopener">HAWQS</a> (SWAT) results; see also <a href="https://modelmywatershed.org/" target="_blank" rel="noopener">Model My Watershed</a>.</p>
+<p class="fine">Assumes new roofs and pavement shed 90% of the rain that falls on them as surface runoff, and no longer recharge groundwater. <b>Share built over</b> starts at 100% — the upper bound, since the acreage is the whole project footprint, yards and utility areas included. Lower it for a realistic build-out.</p>
+
+<p class="check"><b>The 34-inch rainfall figure is a placeholder.</b> It is in the right range for this part of Hood County, but it has not been taken from a rainfall record, and nothing on this page sources it. Replace it before any number here is quoted anywhere.</p>
+
+<p class="fine"><b>What replaces this estimate.</b> First, <a href="https://modelmywatershed.org/" target="_blank" rel="noopener">Model My Watershed</a> — a real land-cover water balance for the watershed, rather than one runoff coefficient applied to a single block of acres. After that, SWAT modelling of the Paluxy itself through <a href="https://dev.hawqs.tamu.edu/" target="_blank" rel="noopener">HAWQS</a>, which is the work this project is building toward.</p>
+
+<h3>What this has to do with water quality</h3>
+
+<p>The estimate above counts water, not pollutants. It belongs here because the two are the same question asked twice.</p>
+
+<p>Runoff off a roof or a parking lot arrives fast and carries what the surface is holding — sediment while the site is being built, then the ordinary load of a paved industrial yard. It does not filter through soil on the way. So a watershed that sheds more of its rain as surface runoff delivers more of that load to the river, in sharper pulses.</p>
+
+<p>The other half matters more, and it is the quieter one. Rain that no longer soaks in is rain that no longer feeds the springs and the base flow. Base flow is what dilutes a discharge and what holds dissolved oxygen up through a Texas summer — and the dissolved oxygen criterion a segment carries is the one that has to hold when flow is at its lowest, which is precisely when there is least water to do the work. Less base flow means the same discharge lands in less water.</p>
+
+<p>Segment&nbsp;1229 is already on the state's 303(d) list for sulfate, total dissolved solids and chloride — constituents that concentrate as flow drops. And Tier&nbsp;2 antidegradation asks a narrow question: will existing quality be lowered by more than a negligible amount? The paths above are how it could be, without a single new permitted outfall.</p>
 
 <h2>Test your water</h2>
 
@@ -229,6 +257,25 @@ function draw() {
   svg += '</svg>';
 
   const pct = k => { const v = (dc[k] / now[k] - 1) * 100; return (v > 0 ? '+' : '') + v.toFixed(1) + '%'; };
+
+  // The same five lines of arithmetic the chart is made of, written out with
+  // whatever is in the inputs right now. Nothing here is modelled.
+  const ac = Math.round(WS_ACRES).toLocaleString(), paved = RUNOFF_C * P;
+  document.getElementById('calcsteps').innerHTML = `
+    <li>Ten years of daily flow at the gauge, split into quick runoff and base flow, come to
+        <code>${base.surf.toFixed(2)} in/yr</code> of surface runoff and
+        <code>${base.sub.toFixed(2)} in/yr</code> of base flow across the watershed's ${ac} acres.</li>
+    <li>Share of the watershed built over:
+        <code>${acres.toLocaleString()} ÷ ${ac} × ${Math.round(imp * 100)}%</code> =
+        <b>${(f * 100).toFixed(2)}%</b>.</li>
+    <li>On that share, runoff is taken as <code>0.9 × ${P} in</code> = <b>${paved.toFixed(1)} in/yr</b>,
+        and recharge as <b>zero</b>. It currently yields ${base.surf.toFixed(2)} in/yr, so those acres
+        go up about ${Math.round(paved / base.surf)}-fold.</li>
+    <li>The other <b>${(100 - f * 100).toFixed(2)}%</b> of the watershed is left exactly as the gauge found it.</li>
+    <li>New surface runoff =
+        <code>${(1 - f).toFixed(4)} × ${base.surf.toFixed(2)} + ${f.toFixed(4)} × ${paved.toFixed(1)}</code>
+        = <b>${dc.surf.toFixed(2)} in/yr</b>, which is the <b>${pct('surf')}</b> in the table.
+        Base flow drops by the same share. Acre-feet are inches × ${ac} ÷ 12.</li>`;
   out.innerHTML = `
     <div class="key"><span><i style="background:#b9b5ab"></i>Now</span><span><i style="background:#1D9E75"></i>With data centers</span><span>acre-feet per year</span></div>
     ${svg}
