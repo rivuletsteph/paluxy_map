@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Data Centers &amp; Your Water — Paluxy River</title>
-<meta name="description" content="Water quality and the long-term health of the Paluxy River watershed, in the context of proposed data-center development.">
+<meta name="description" content="Drinking water, river health and the Paluxy River watershed as one connected system, in the context of proposed data-center development.">
 <!--
   The landowner-facing page. The map lives in index.html and is embedded here
   as an inset; this page carries the reading.
@@ -61,7 +61,7 @@
   a { color: #15806a; }
   b, strong { font-weight: 600; color: var(--text-primary); }
 
-  .qa { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .qa { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr)); gap: 14px; }
   .qcard { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 16px 16px 14px; }
   .qcard .q { font-weight: 600; margin-bottom: 7px; }
   .qcard p { font-size: 15px; color: var(--text-secondary); margin: 0; }
@@ -142,6 +142,92 @@
   .later .what { font-weight: 600; margin: 5px 0 4px; }
   .later p { font-size: 14px; color: var(--text-secondary); margin: 0; }
 
+  /* ── reading progress, section nav ── */
+  .progress {
+    position: fixed; top: 0; left: 0; height: 3px; width: 0;
+    background: var(--accent-teal); z-index: 40; transition: width .08s linear;
+  }
+  .snav {
+    position: sticky; top: 0; z-index: 30;
+    background: rgba(245,243,239,0.92); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .snav-inner {
+    max-width: 720px; margin: 0 auto; padding: 0 16px;
+    display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none;
+  }
+  .snav-inner::-webkit-scrollbar { display: none; }
+  .snav a {
+    flex: 0 0 auto; padding: 11px 10px; font-size: 13px; text-decoration: none;
+    color: var(--text-hint); border-bottom: 2px solid transparent; white-space: nowrap;
+  }
+  .snav a:hover { color: var(--text-primary); }
+  .snav a[aria-current="true"] { color: var(--text-primary); border-bottom-color: var(--accent-teal); }
+  h2 { scroll-margin-top: 58px; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+  /* ── a counted fact you can act on ── */
+  a.fact { text-decoration: none; color: inherit; display: block; transition: transform .12s, box-shadow .12s, border-color .12s; }
+  a.fact:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,0.07); border-color: var(--accent-teal); }
+  a.fact .go { font-size: 11.5px; color: var(--accent-teal); display: block; margin-top: 6px; }
+
+  /* ── a line worth stopping on ── */
+  .pull {
+    font-size: 20px; line-height: 1.38; color: var(--text-primary);
+    border-left: 3px solid var(--accent-teal); padding: 2px 0 2px 16px;
+    margin: 24px 0; letter-spacing: -0.01em;
+  }
+
+  /* ── the map, as an invitation ── */
+  .inset-hint {
+    display: flex; align-items: center; gap: 8px; font-size: 13px;
+    color: var(--text-secondary); margin: 0 0 9px;
+  }
+  .inset-hint b { font-weight: 600; }
+  .chips { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 11px; }
+  .chip {
+    font-size: 12.5px; padding: 5px 11px; border-radius: 99px; text-decoration: none;
+    background: var(--panel); border: 1px solid var(--border); color: var(--text-secondary);
+  }
+  .chip:hover { border-color: var(--accent-teal); color: var(--text-primary); }
+
+  /* ── sliders ── */
+  .ins { grid-template-columns: 1fr; gap: 16px; }
+  .slider-row label { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 7px; }
+  .slider-row .readout {
+    font-family: 'DM Mono', ui-monospace, monospace; font-size: 15px; color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+  }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 4px; margin: 0;
+    background: var(--border); border-radius: 2px; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 19px; height: 19px; border-radius: 50%;
+    background: var(--accent-teal); border: 3px solid var(--panel);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 15px; height: 15px; border-radius: 50%; background: var(--accent-teal);
+    border: 3px solid var(--panel); box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+  }
+  input[type=range]:focus-visible { outline: 2px solid var(--accent-teal); outline-offset: 4px; }
+
+  /* ── where you are going next ── */
+  .next { margin-top: 26px; font-size: 14px; }
+  .next a { text-decoration: none; }
+  .next a:hover { text-decoration: underline; }
+  .totop {
+    position: fixed; right: 18px; bottom: 18px; z-index: 35;
+    width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border);
+    background: var(--panel); color: var(--text-secondary); font-size: 17px; cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.10); opacity: 0; pointer-events: none;
+    transition: opacity .18s;
+  }
+  .totop.on { opacity: 1; pointer-events: auto; }
+  .totop:hover { color: var(--text-primary); border-color: var(--accent-teal); }
+
   footer {
     margin-top: 54px; padding-top: 20px; border-top: 1px solid var(--rule);
     font-size: 13px; color: var(--text-hint); line-height: 1.7;
@@ -150,6 +236,8 @@
     body { font-size: 16px; }
     .inset-frame iframe { height: 340px; }
     .qa, .res, .facts { grid-template-columns: 1fr; }
+    .pull { font-size: 18px; }
+    .snav a { padding: 10px 9px; font-size: 12.5px; }
   }
 </style>
 </head>
@@ -157,17 +245,30 @@
 
 <p class="draft-banner" role="note"><strong>Draft</strong> — not reviewed or endorsed by TIAER or Tarleton State University.</p>
 
+<div class="progress" id="progress"></div>
+
+<nav class="snav" aria-label="Sections">
+  <div class="snav-inner">
+    <a href="#start">Start here</a>
+    <a href="#watershed">The watershed</a>
+    <a href="#quality">Water quality</a>
+    <a href="#yourwater">Your water</a>
+    <a href="#act">Take action</a>
+    <a href="#contact">Who to contact</a>
+  </div>
+</nav>
+
 <div class="wrap">
 
 <header>
   <h1>Data Centers &amp; Your Water</h1>
-  <p class="sub">What is known about water quality and the long-term health of the Paluxy River watershed, and what a wave of proposed data centers would ask of it.</p>
+  <p class="sub">The water people drink, the health of the river, and the watershed they share — what is known about each today, and what a wave of proposed data centers would ask of them. It is one system, so it is really one question.</p>
 </header>
 
-<h2>Start here</h2>
+<h2 id="start">Start here</h2>
 
-<h3>Two questions, answered plainly</h3>
-<p class="lead">Most people arrive with the same two questions. Here is the short version — the rest of the page goes deeper.</p>
+<h3>Three questions, answered plainly</h3>
+<p class="lead">Most people arrive with the same few questions. Here is the short version — the rest of the page goes deeper.</p>
 
 <div class="qa">
   <div class="qcard">
@@ -175,23 +276,30 @@
     <p>All the land that drains to a common waterway. Rain falling across this area works its way — over the surface and underground — into the Paluxy River. What happens on the land upstream can reach the water everyone downstream depends on.</p>
   </div>
   <div class="qcard">
+    <div class="q">Is my well part of the river?</div>
+    <p>Largely, yes. Rain that soaks into the ground recharges the aquifer wells draw from, and that same groundwater feeds the springs holding the river up between storms. Your well and the river are not two separate supplies. They are two places to meet the same water.</p>
+  </div>
+  <div class="qcard">
     <div class="q">How does this affect me?</div>
-    <p>A large data center takes land and water, and changes how water moves across a site. The thing to watch is not one dramatic event. It is the <strong>long-term quality and health</strong> of the water in your watershed and your well, measured against what it is today.</p>
+    <p>A large data center takes land and water, and changes how water moves across a site. The thing to watch is not one dramatic event. It is the <strong>long-term quality and health</strong> of what you drink and what runs past your place, measured against what both are today.</p>
   </div>
 </div>
 
-<h2>The watershed</h2>
+<p class="next"><a href="#watershed">Next: the watershed →</a></p>
+
+<h2 id="watershed">The watershed</h2>
 
 <h3>The Paluxy River system</h3>
 <p class="lead">The Paluxy drains this corner of north-central Texas before joining the Brazos near Glen Rose. TCEQ <b>Segment&nbsp;1229</b> covers the main stem and the North Paluxy — the reach most directly downstream of the proposed development.</p>
 
 <div class="facts">
-  <div class="fact"><span class="n">511</span><span class="l">square miles — 327,289 acres, the HUC-10 watershed boundary</span></div>
-  <div class="fact"><span class="n">37</span><span class="l">named tributaries in the National Hydrography Dataset</span></div>
-  <div class="fact"><span class="n">4,233</span><span class="l">acres of proposed data center inside the watershed — 1.3% of it</span></div>
+  <a class="fact" href="./index.html" target="_blank" rel="noopener"><span class="n">511</span><span class="l">square miles — 327,289 acres, the HUC-10 watershed boundary</span><span class="go">See the boundary →</span></a>
+  <a class="fact" href="./index.html" target="_blank" rel="noopener"><span class="n">37</span><span class="l">named tributaries in the National Hydrography Dataset</span><span class="go">Trace them →</span></a>
+  <a class="fact" href="./index.html" target="_blank" rel="noopener"><span class="n">4,233</span><span class="l">acres of proposed data center inside the watershed — 1.3% of it</span><span class="go">See the footprints →</span></a>
 </div>
 
 <div class="inset">
+  <p class="inset-hint"><b>This map is live.</b> Drag it, zoom in, click a station or a footprint to see its record.</p>
   <div class="inset-frame">
     <iframe src="./index.html?inset=1" title="Interactive map of the Paluxy River watershed" loading="lazy"></iframe>
   </div>
@@ -199,19 +307,26 @@
     <span>Monitoring stations, wells, springs, dischargers and the proposed data centers.</span>
     <a href="./index.html" target="_blank" rel="noopener">Open the full map →</a>
   </p>
+  <div class="chips">
+    <a class="chip" href="./index.html" target="_blank" rel="noopener">Switch on the 239 wells</a>
+    <a class="chip" href="./index.html" target="_blank" rel="noopener">Switch on the dischargers</a>
+    <a class="chip" href="./index.html" target="_blank" rel="noopener">Zoom in for the concept plans</a>
+  </div>
 </div>
 
 <p class="fine">Eight data center projects have been proposed in and around Hood County. Four sit inside the watershed — Comanche Circle, Project Spectrum, Project Panther and Project Lion — along with 76 of Project Yellow's 544 acres. The other three fall outside it entirely. Footprints and concept plans come from The Texas Tribune's reporting.</p>
 
-<h2>Water quality today</h2>
+<p class="next"><a href="#quality">Next: where the Paluxy stands now →</a></p>
+
+<h2 id="quality">Water quality today</h2>
 
 <h3>Where the Paluxy stands now</h3>
 <p class="lead">The baseline is the point. Establishing what the river is today is what makes any future change visible — and what an antidegradation review is argued against. This is what is already being measured, by whom, and for how long.</p>
 
 <div class="facts">
-  <div class="fact"><span class="n">28</span><span class="l">TCEQ surface water quality monitoring stations</span></div>
-  <div class="fact"><span class="n">12</span><span class="l">Texas Stream Team volunteer sites — only 2 with results published</span></div>
-  <div class="fact"><span class="n">1</span><span class="l">active USGS gauge on the Paluxy itself — 08091500 at Glen Rose</span></div>
+  <a class="fact" href="./index.html" target="_blank" rel="noopener"><span class="n">28</span><span class="l">TCEQ surface water quality monitoring stations</span><span class="go">Find them on the map →</span></a>
+  <a class="fact" href="./index.html" target="_blank" rel="noopener"><span class="n">12</span><span class="l">Texas Stream Team volunteer sites — only 2 with results published</span><span class="go">Filled means published →</span></a>
+  <a class="fact" href="https://waterdata.usgs.gov/monitoring-location/08091500/" target="_blank" rel="noopener"><span class="n">1</span><span class="l">active USGS gauge on the Paluxy itself — 08091500 at Glen Rose</span><span class="go">Today's flow at USGS →</span></a>
 </div>
 
 <p style="margin-top:16px">Those 28 TCEQ stations are the formal record — the Clean Rivers Program and SWQMIS sampling that TCEQ assesses the segment against. The Stream Team sites are the volunteer network, and they are where the gap is: <b>ten of the twelve have no results in the public Water Quality Portal</b>. Readings may well have been taken there; they would sit in Stream Team's own database rather than the national one. Pulling them across is a job worth doing, because a volunteer record going back years is exactly the kind of evidence a baseline argument runs on.</p>
@@ -225,6 +340,8 @@
 <p><a href="https://claude.ai/artifact/BCPMNNG5ACsLghLbyA8vKV" target="_blank" rel="noopener">Read the preliminary water quality analysis →</a></p>
 
 <p class="fine">It is orientation, not an assessment. The <i>E.&nbsp;coli</i> geometric means in it are period-of-record rather than the seven-year window TCEQ assesses against, censored results are plotted at their reporting limit, and the criteria lines are the general ones — the segment-specific values still need checking against Appendix&nbsp;A.</p>
+
+<p class="pull">The formal record is quarterly and public. The volunteer record is mostly invisible.</p>
 
 <p>The gauge at Glen Rose has logged daily flow for decades. Everything in the estimate below rests on its record.</p>
 
@@ -240,7 +357,9 @@
 
 <p class="check"><b>To confirm before this goes out.</b> Two things, and they may conflict. <b>(1)</b> Segment&nbsp;1229's designated uses: a TCEQ permit record lists them as high aquatic life use, public water supply and primary contact recreation, but that document is a few years old and has not been checked against the current Appendix&nbsp;A of §307.10, where the uses and the dissolved oxygen number are actually set. <b>(2)</b> The segment's assessment status: an earlier draft of this page recorded TCEQ listing 1229 as <i>Fully Supporting</i>, while the 303(d) list added it in 2008 for sulfate, total dissolved solids and chloride. Both can be true — different parameters, different years — but the current Integrated Report is what settles it, and until it is read, neither statement should be quoted.</p>
 
-<h2>What this means for your water</h2>
+<p class="next"><a href="#yourwater">Next: what this means for your water →</a></p>
+
+<h2 id="yourwater">What this means for your water</h2>
 
 <h3>How water moves — and where development fits</h3>
 <p class="lead">A simple picture of the pathways: rainfall, surface runoff, the river, your well, and the aquifer beneath.</p>
@@ -276,15 +395,32 @@
   <p class="cap">Conceptual diagram — water pathways in the watershed, and where development meets them.</p>
 </div>
 
+<p class="pull">Your well and the river are two places to meet the same water.</p>
+
+<p>That is why this page treats drinking water and river health as one subject. Rain either soaks in or runs off. What soaks in recharges the aquifer that wells draw from, and emerges downhill as the springs and base flow that keep the river alive through a dry August. What runs off goes straight to the channel, carrying whatever the surface was holding, and is gone.</p>
+
+<p>Change that split across enough acres and you change both halves at once: more load arriving in the river, and less stored water underneath to dilute it or to draw on. A well, a spring and a river reach are three windows onto the same body of water.</p>
+
 <h4>What paving part of it would do</h4>
 
 <p>Roofs, pavement and equipment pads shed rain instead of soaking it up. More of it runs straight to the river, and less soaks in to feed the springs and the base flow that keep the river going between storms. This is a screening estimate of that trade — move the inputs and watch which way each number goes.</p>
 
+<p class="pull">One and a quarter percent of the watershed, shedding twenty times the runoff.</p>
+
 <div class="card">
   <div class="ins">
-    <label for="acres">Data center area inside the watershed (acres)</label><input id="acres" type="number" min="0" step="10" value="4233">
-    <label for="rain">Annual rainfall (inches)<span class="ph">placeholder</span></label><input id="rain" type="number" min="0" step="1" value="34">
-    <label for="imp">Share built over (%)</label><input id="imp" type="number" min="0" max="100" step="5" value="100">
+    <div class="slider-row">
+      <label for="acres">Data center area inside the watershed<span class="readout"><output id="o-acres">4,233</output> acres</span></label>
+      <input id="acres" type="range" min="0" max="7799" step="1" value="4233">
+    </div>
+    <div class="slider-row">
+      <label for="rain">Annual rainfall<span class="ph">placeholder</span><span class="readout"><output id="o-rain">34</output> in</span></label>
+      <input id="rain" type="range" min="18" max="60" step="1" value="34">
+    </div>
+    <div class="slider-row">
+      <label for="imp">Share built over<span class="readout"><output id="o-imp">100</output>%</span></label>
+      <input id="imp" type="range" min="0" max="100" step="5" value="100">
+    </div>
   </div>
   <div id="out"><p class="fine" style="margin-top:16px;">Loading the gauge record…</p></div>
   <details class="calc">
@@ -293,7 +429,7 @@
   </details>
 </div>
 
-<p class="fine">Assumes new roofs and pavement shed 90% of the rain that falls on them as surface runoff, and no longer recharge groundwater. <b>Share built over</b> starts at 100% — the upper bound, since the acreage is the whole project footprint, yards and utility areas included. Lower it for a realistic build-out.</p>
+<p class="fine">Assumes new roofs and pavement shed 90% of the rain that falls on them as surface runoff, and no longer recharge groundwater. <b>Share built over</b> starts at 100% — the upper bound, since the acreage is the whole project footprint, yards and utility areas included. Lower it for a realistic build-out. The acreage slider runs to 7,799 — every one of the eight projects, including the three outside the watershed.</p>
 
 <p class="check"><b>The 34-inch rainfall figure is a placeholder.</b> It is in the right range for this part of Hood County, but it has not been taken from a rainfall record, and nothing on this page sources it. Replace it before any number here is quoted anywhere.</p>
 
@@ -317,7 +453,9 @@
   <p>A cut-away showing where a project sits, where it would withdraw water, and how nearby wells could be affected. It is the picture people most want, and the one that needs the groundwater work done first.</p>
 </div>
 
-<h2>Take action</h2>
+<p class="next"><a href="#act">Next: three steps you can take →</a></p>
+
+<h2 id="act">Take action</h2>
 
 <h3>Three practical steps for landowners</h3>
 <p class="lead">Protecting water quality starts with documentation — from establishing your own baseline to engaging the public process.</p>
@@ -359,7 +497,9 @@
   </div>
 </div>
 
-<h2>Who to contact</h2>
+<p class="next"><a href="#contact">Next: who to contact →</a></p>
+
+<h2 id="contact">Who to contact</h2>
 
 <p class="lead">Listed for information, not as endorsements.</p>
 
@@ -396,6 +536,8 @@
 </footer>
 
 </div>
+
+<button class="totop" id="totop" aria-label="Back to the top" title="Back to the top">↑</button>
 
 <script>
 /* ───────────────────────────────────────────────────────────────────
@@ -495,6 +637,47 @@ loadBaseline().then(draw).catch(e => {
   document.getElementById('out').innerHTML =
     `<p class="fine" style="color:#c0392b;">Could not load the gauge record from USGS (${e.message}). The estimate needs it; everything else on this page still works.</p>`;
 });
+</script>
+
+<script>
+/* Page furniture: the progress line, the section nav, the slider readouts and
+   the back-to-top button. None of it touches the numbers — it is all about
+   finding your way around a long page. */
+(function () {
+  const bar = document.getElementById('progress');
+  const topBtn = document.getElementById('totop');
+  const links = [...document.querySelectorAll('.snav a')];
+  const sections = links.map(a => document.getElementById(a.getAttribute('href').slice(1))).filter(Boolean);
+
+  function onScroll() {
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    const y = window.scrollY;
+    bar.style.width = (max > 0 ? Math.min(y / max, 1) * 100 : 0) + '%';
+    topBtn.classList.toggle('on', y > 700);
+    // The section you are in is the last heading to have passed under the nav.
+    let cur = sections[0];
+    sections.forEach(s => { if (s.getBoundingClientRect().top <= 70) cur = s; });
+    links.forEach(a => {
+      if (cur && a.getAttribute('href') === '#' + cur.id) a.setAttribute('aria-current', 'true');
+      else a.removeAttribute('aria-current');
+    });
+  }
+  addEventListener('scroll', onScroll, { passive: true });
+  document.addEventListener('scroll', onScroll, { passive: true });
+  addEventListener('resize', onScroll);
+  onScroll();
+
+  topBtn.addEventListener('click', () => scrollTo({ top: 0, behavior: 'smooth' }));
+
+  // Each slider shows its own value. The estimate is already listening for the
+  // same input event, so it redraws on its own.
+  [['acres', v => (+v).toLocaleString()], ['rain', v => v], ['imp', v => v]].forEach(([id, fmt]) => {
+    const input = document.getElementById(id), out = document.getElementById('o-' + id);
+    const show = () => { out.textContent = fmt(input.value); };
+    input.addEventListener('input', show);
+    show();
+  });
+})();
 </script>
 
 </body>
