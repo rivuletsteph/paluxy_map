@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data Centers &amp; Your Water — Paluxy River</title>
+<meta name="description" content="Water quality and the long-term health of the Paluxy River watershed, in the context of proposed data-center development.">
+<!--
+  The landowner-facing page. The map lives in index.html and is embedded here
+  as an inset; this page carries the reading.
+
+  The three constants below are copied from the saved data rather than fetched,
+  so the page still works opened straight from a Downloads folder. Each one
+  says where it came from. The only thing fetched live is the gauge record,
+  which needs the internet anyway.
+-->
+<style>
+  :root {
+    --bg: #f5f3ef;
+    --panel: #ffffff;
+    --border: #e0ddd6;
+    --text-primary: #1a1915;
+    --text-secondary: #55524b;
+    --text-hint: #8a877f;
+    --accent-teal: #1D9E75;
+    --accent-teal-light: #E1F5EE;
+    --rule: #d8d4cb;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text-primary);
+    font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-size: 17px; line-height: 1.6; -webkit-font-smoothing: antialiased;
+  }
+  .draft-banner {
+    margin: 0; padding: 10px 16px; text-align: center;
+    background: #fdf6e3; border-bottom: 1px solid #e8dcc0;
+    font-size: 13.5px; color: #6b5d3a;
+  }
+  .draft-banner strong { color: #4a3f24; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 0 16px 72px; }
+
+  header { padding: 44px 0 28px; }
+  h1 { font-size: clamp(27px, 5.4vw, 38px); line-height: 1.15; margin: 0; letter-spacing: -0.015em; }
+  .sub { color: var(--text-secondary); font-size: 16px; margin: 10px 0 0; }
+
+  h2 {
+    font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--text-hint); margin: 46px 0 14px;
+    padding-bottom: 8px; border-bottom: 1px solid var(--rule);
+  }
+  p { margin: 0 0 14px; }
+  p:last-child { margin-bottom: 0; }
+  a { color: #15806a; }
+  b, strong { font-weight: 600; color: var(--text-primary); }
+
+  /* ── map inset ── */
+  .inset { margin: 10px 0 0; }
+  .inset-frame {
+    position: relative; border: 1px solid var(--border); border-radius: 6px;
+    overflow: hidden; background: var(--panel); box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  }
+  .inset-frame iframe { display: block; width: 100%; height: 440px; border: 0; }
+  .inset-cap {
+    display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: baseline;
+    margin-top: 9px; font-size: 13px; color: var(--text-hint);
+  }
+  .inset-cap a { font-weight: 500; }
+
+  /* ── the estimate ── */
+  .card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 6px;
+    padding: 18px 18px 16px; margin-top: 6px;
+  }
+  .ins { display: grid; grid-template-columns: 1fr 92px; gap: 9px 12px; align-items: center; font-size: 14px; color: var(--text-secondary); }
+  .ins input {
+    width: 100%; font: inherit; font-size: 14px; padding: 5px 8px; text-align: right;
+    border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--text-primary);
+  }
+  .ins input:focus { outline: none; border-color: var(--accent-teal); }
+  .key { font-size: 12.5px; color: var(--text-secondary); margin: 16px 0 8px; display: flex; flex-wrap: wrap; gap: 6px 14px; }
+  .key i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 5px; }
+  table.chg { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 6px; }
+  table.chg td, table.chg th { padding: 6px 2px; text-align: right; border-top: 1px solid var(--border); font-weight: 400; }
+  table.chg td:first-child, table.chg th:first-child { text-align: left; color: var(--text-secondary); }
+  table.chg th { color: var(--text-hint); font-size: 11px; letter-spacing: 0.07em; text-transform: uppercase; }
+  .num { font-family: 'DM Mono', ui-monospace, Menlo, monospace; font-variant-numeric: tabular-nums; }
+  .fine { font-size: 13px; color: var(--text-hint); line-height: 1.55; margin-top: 12px; }
+  .check {
+    border-left: 2px solid var(--accent-teal); background: rgba(29,158,117,0.055);
+    padding: 11px 0 11px 13px; font-size: 14px; color: var(--text-secondary); margin: 16px 0 0;
+  }
+  footer {
+    margin-top: 54px; padding-top: 20px; border-top: 1px solid var(--rule);
+    font-size: 13px; color: var(--text-hint); line-height: 1.7;
+  }
+  @media (max-width: 560px) {
+    body { font-size: 16px; }
+    .inset-frame iframe { height: 340px; }
+  }
+</style>
+</head>
+<body>
+
+<p class="draft-banner" role="note"><strong>Draft</strong> — not reviewed or endorsed by TIAER or Tarleton State University.</p>
+
+<div class="wrap">
+
+<header>
+  <h1>Data Centers &amp; Your Water</h1>
+  <p class="sub">What is known about water quality and the long-term health of the Paluxy River watershed, and what a wave of proposed data centers would ask of it.</p>
+</header>
+
+<p>Eight data center projects have been proposed in and around Hood County. Four of them sit inside the Paluxy River watershed, along with part of a fifth. This page gathers what is already measured about the river — who samples it, where, and for how long — and sets a first, rough estimate of what paving over part of the watershed would do to the water that reaches it.</p>
+
+<p>It is a starting point for weighing the trade-offs, not a verdict on them.</p>
+
+<h2>The watershed</h2>
+
+<div class="inset">
+  <div class="inset-frame">
+    <iframe src="./index.html?inset=1" title="Interactive map of the Paluxy River watershed" loading="lazy"></iframe>
+  </div>
+  <div class="inset-cap">
+    <span>Monitoring stations, wells, springs, dischargers and the proposed data centers.</span>
+    <a href="./index.html" target="_blank" rel="noopener">Open the full map →</a>
+  </div>
+</div>
+
+<h2>Why the Paluxy carries a higher bar</h2>
+
+<p>Texas does not hold every stream to the same standard. Under the <a href="https://www.tceq.texas.gov/waterquality/standards" target="_blank" rel="noopener">Texas Surface Water Quality Standards</a> (30&nbsp;TAC&nbsp;§307) every classified segment is assigned an <b>aquatic life use</b> — minimal, limited, intermediate, high, exceptional, or oyster waters — and its dissolved oxygen criterion follows from that assignment. The higher the use, the higher the bar a discharge has to clear.</p>
+
+<p>The Paluxy River and North Paluxy River are <b>Segment&nbsp;1229</b> of the Brazos River Basin.</p>
+
+<p>Then <b>antidegradation</b> sits on top of all of it. Where a water is already better than its standards require, Tier&nbsp;2 says that quality has to be kept: a new or increased discharge may not lower it by more than a negligible amount, and may not lower it at all unless the lowering is shown to be necessary. A river in good condition brings that rule with it — which is exactly why it matters to know, and to record, what condition the Paluxy is in now.</p>
+
+<p class="check"><b>To confirm before this goes out:</b> Segment&nbsp;1229's designated uses. A TCEQ permit record lists them as high aquatic life use, public water supply and primary contact recreation, but that document is a few years old and has not been checked against the current Appendix&nbsp;A of §307.10, which is where the uses and the dissolved oxygen number are actually set. Worth reading alongside it: Segment&nbsp;1229 was added to the state's 303(d) list in 2008 for sulfate, total dissolved solids and chloride.</p>
+
+<h2>Now vs. with data centers</h2>
+
+<p>Roofs, pavement and equipment pads shed rain instead of soaking it up. More of it runs straight to the river, and less of it soaks in to feed the springs and the base flow that keep the river going between storms. This is a screening estimate of that trade, not a model run — move the inputs and watch which way each number goes.</p>
+
+<div class="card">
+  <div class="ins">
+    <label for="acres">Data center area (acres)</label><input id="acres" type="number" min="0" step="10" value="4233">
+    <label for="rain">Annual rainfall (inches)</label><input id="rain" type="number" min="0" step="1" value="34">
+    <label for="imp">Share built over (%)</label><input id="imp" type="number" min="0" max="100" step="5" value="100">
+  </div>
+  <div id="out"><p class="fine" style="margin-top:16px;">Loading the gauge record…</p></div>
+</div>
+
+<p class="fine">Assumes new roofs and pavement shed 90% of the rain that falls on them as surface runoff, and no longer recharge groundwater. <b>Share built over</b> starts at 100% — the upper bound, since the acreage is the whole project footprint, yards and utility areas included. Lower it for a realistic build-out. To be replaced by <a href="https://dev.hawqs.tamu.edu/" target="_blank" rel="noopener">HAWQS</a> (SWAT) results; see also <a href="https://modelmywatershed.org/" target="_blank" rel="noopener">Model My Watershed</a>.</p>
+
+<h2>Test your water</h2>
+
+<p>On a private well? TIAER's lab tests drinking water for coliform bacteria and <i>E. coli</i>. Its guidance walks through collecting a sample and getting it to the lab: <a href="https://www.tarleton.edu/tiaer/drinking-water-bacteria-testing/" target="_blank" rel="noopener">Drinking water bacteria testing →</a></p>
+
+<p>If you have a well, its record may already be on the map. The wells layer comes from the TWDB Groundwater Database — depth, aquifer, year drilled, and whether water levels or water quality have been recorded there.</p>
+
+<footer>
+  Data Centers &amp; Your Water — Paluxy River · Draft 3 · 9 November 2026<br>
+  Data center footprints and concept plans: <a href="https://www.texastribune.org/2026/06/02/texas-data-centers-hood-county-local-control-rural-water-power/" target="_blank" rel="noopener">The Texas Tribune</a><br>
+  Monitoring data: TCEQ, Texas Stream Team, USGS, TWDB and EPA ECHO, via each agency's own service.<br>
+  🤖 Created with <a href="https://claude.ai" target="_blank" rel="noopener">Claude</a>
+</footer>
+
+</div>
+
+<script>
+/* ───────────────────────────────────────────────────────────────────
+   Runoff screening estimate.
+
+   Three constants are copied from the saved data so the page works from
+   a download; only the gauge record is fetched.
+   ─────────────────────────────────────────────────────────────────── */
+const WS_ACRES  = 327288.9;            // geojsons/Paluxy_Watershed.geojson, ACRES (HUC-10 1206020201)
+const GAUGE     = { id: '08091500', name: 'Paluxy Rv at Glen Rose, TX', daSqMi: 410 };
+                                        // geojsons/USGS_Gauges.geojson — the Paluxy's own outlet gauge.
+                                        // NOT the Brazos gauge at Glen Rose, which is further east but
+                                        // drains 25,818 sq mi of a different river.
+const RUNOFF_C  = 0.9;                  // runoff coefficient for roofs and pavement
+
+let base = null;
+
+async function loadBaseline() {
+  const start = `${new Date().getFullYear() - 10}-01-01`;
+  const r = await fetch(`https://waterservices.usgs.gov/nwis/dv/?format=json&sites=${GAUGE.id}&parameterCd=00060&statCd=00003&startDT=${start}`);
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const j = await r.json();
+  const q = (j.value.timeSeries?.[0]?.values?.[0]?.value || []).map(x => +x.value).filter(x => x >= 0);
+  if (q.length < 730) throw new Error('not enough daily record');
+  // Lyne–Hollick digital filter (alpha 0.925): splits the hydrograph into
+  // quick surface runoff and the slower subsurface flow that sustains the river.
+  let qf = 0, bsum = 0, qsum = 0;
+  q.forEach((x, i) => { if (i) qf = Math.min(Math.max(0.925 * qf + 0.9625 * (x - q[i - 1]), 0), x); bsum += x - qf; qsum += x; });
+  const inches = cfsMean => cfsMean * 1.9835 * 365.25 / (GAUGE.daSqMi * 640) * 12;
+  const total = inches(qsum / q.length), sub = inches(bsum / q.length);
+  base = { years: (q.length / 365.25).toFixed(1), total, sub, surf: total - sub };
+}
+
+const val = (id, lo, hi) => Math.min(Math.max(+document.getElementById(id).value || 0, lo), hi);
+
+function draw() {
+  const out = document.getElementById('out');
+  if (!base) return;
+  const acres = val('acres', 0, 1e9), P = val('rain', 0, 200), imp = val('imp', 0, 100) / 100;
+  const f = Math.min(acres / WS_ACRES, 1) * imp;
+  const now = { surf: base.surf, sub: base.sub };
+  const dc  = { surf: (1 - f) * base.surf + f * RUNOFF_C * P, sub: (1 - f) * base.sub };
+  now.total = now.surf + now.sub; dc.total = dc.surf + dc.sub;
+
+  const af = x => x / 12 * WS_ACRES;                       // inches over the watershed -> acre-feet/yr
+  const rows = [['Stream flow', 'total'], ['Surface runoff', 'surf'], ['Subsurface flow (base flow)', 'sub']];
+  const mx = Math.max(...rows.flatMap(([, k]) => [af(now[k]), af(dc[k])])) || 1;
+  const W = 430, bh = 12;
+
+  let svg = `<svg viewBox="0 0 ${W} ${rows.length * 44}" width="100%" role="img" aria-label="Water balance now and with data centers">`;
+  rows.forEach(([lab, k], i) => {
+    const y = i * 44, bw = W - 88;
+    const w1 = af(now[k]) / mx * bw, w2 = af(dc[k]) / mx * bw;
+    svg += `<text x="0" y="10" transform="translate(0,${y})" font-size="12" fill="#55524b" font-family="DM Sans,sans-serif">${lab}</text>
+      <rect x="0" y="${y + 15}" width="${w1}" height="${bh}" rx="2" fill="#b9b5ab"/>
+      <text x="${w1 + 6}" y="${y + 25}" font-size="11" font-family="DM Mono,monospace" fill="#1a1915">${Math.round(af(now[k])).toLocaleString()}</text>
+      <rect x="0" y="${y + 28}" width="${w2}" height="${bh}" rx="2" fill="#1D9E75"/>
+      <text x="${w2 + 6}" y="${y + 38}" font-size="11" font-family="DM Mono,monospace" fill="#1a1915">${Math.round(af(dc[k])).toLocaleString()}</text>`;
+  });
+  svg += '</svg>';
+
+  const pct = k => { const v = (dc[k] / now[k] - 1) * 100; return (v > 0 ? '+' : '') + v.toFixed(1) + '%'; };
+  out.innerHTML = `
+    <div class="key"><span><i style="background:#b9b5ab"></i>Now</span><span><i style="background:#1D9E75"></i>With data centers</span><span>acre-feet per year</span></div>
+    ${svg}
+    <table class="chg"><tr><th></th><th>Change</th></tr>
+      ${rows.map(([lab, k]) => `<tr><td>${lab}</td><td class="num">${pct(k)}</td></tr>`).join('')}
+    </table>
+    <p class="fine">Baseline: ${GAUGE.name} (USGS ${GAUGE.id}), ${base.years} years of daily flow, ${GAUGE.daSqMi.toLocaleString()} sq mi drainage.</p>`;
+}
+
+document.querySelectorAll('#acres, #rain, #imp').forEach(i => i.addEventListener('input', draw));
+
+loadBaseline().then(draw).catch(e => {
+  document.getElementById('out').innerHTML =
+    `<p class="fine" style="color:#c0392b;">Could not load the gauge record from USGS (${e.message}). The estimate needs it; everything else on this page still works.</p>`;
+});
+</script>
+
+</body>
+</html>
